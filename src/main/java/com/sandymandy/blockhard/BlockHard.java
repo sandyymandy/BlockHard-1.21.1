@@ -1,5 +1,6 @@
 package com.sandymandy.blockhard;
 
+import com.sandymandy.blockhard.entity.ModEntities;
 import net.fabricmc.api.ModInitializer;
 
 import org.slf4j.Logger;
@@ -18,7 +19,7 @@ public class BlockHard implements ModInitializer {
 		// This code runs as soon as Minecraft is in a mod-load-ready state.
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
-
+		ModEntities.registerModEntities();
 		LOGGER.info("Hello Fabric world!");
 	}
 }
