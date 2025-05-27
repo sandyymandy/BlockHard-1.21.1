@@ -63,12 +63,13 @@ public class LucyEnitiy extends AnimalEntity implements GeoEntity {
         controllerRegistrar.add(new AnimationController<>(this,"controller", 0, this::predicate));
     }
 
-    private <T extends GeoAnimatable> PlayState predicate(AnimationState<LucyEnitiy> lucyEnitiyAnimationState) {
+    private <LucyEnitiy extends GeoAnimatable> PlayState predicate(AnimationState<LucyEnitiy> lucyEnitiyAnimationState) {
         if(lucyEnitiyAnimationState.isMoving()){
             lucyEnitiyAnimationState.getController().setAnimation(RawAnimation.begin().then("animation.lucy.walk", Animation.LoopType.LOOP));
         }
-
-        lucyEnitiyAnimationState.getController().setAnimation(RawAnimation.begin().then("animation.lucy.idle", Animation.LoopType.LOOP));
+        else{
+            lucyEnitiyAnimationState.getController().setAnimation(RawAnimation.begin().then("animation.lucy.idle", Animation.LoopType.LOOP));
+        }
         return PlayState.CONTINUE;
     }
 

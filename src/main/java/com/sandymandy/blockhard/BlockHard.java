@@ -2,6 +2,7 @@ package com.sandymandy.blockhard;
 
 import com.sandymandy.blockhard.entity.ModEntities;
 import com.sandymandy.blockhard.entity.custom.LucyEnitiy;
+import com.sandymandy.blockhard.item.ModItemGroups;
 import com.sandymandy.blockhard.item.ModItems;
 import net.fabricmc.api.ModInitializer;
 
@@ -22,6 +23,7 @@ public class BlockHard implements ModInitializer {
 		// This code runs as soon as Minecraft is in a mod-load-ready state.
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
+		ModItemGroups.registerItemGroups();
 		ModItems.registerModItems();
 		ModEntities.registerModEntities();
 		FabricDefaultAttributeRegistry.register(ModEntities.LUCY, LucyEnitiy.createAttributes());

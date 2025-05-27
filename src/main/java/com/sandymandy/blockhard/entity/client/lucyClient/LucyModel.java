@@ -1,4 +1,4 @@
-package com.sandymandy.blockhard.entity.client;
+package com.sandymandy.blockhard.entity.client.lucyClient;
 
 import com.sandymandy.blockhard.BlockHard;
 import com.sandymandy.blockhard.entity.custom.LucyEnitiy;
@@ -32,6 +32,7 @@ public class LucyModel extends GeoModel<LucyEnitiy> {
 
         if(head != null){
             EntityModelData entityData = animationState.getData(DataTickets.ENTITY_MODEL_DATA);
+            assert entityData != null;
             head.setRotX(entityData.headPitch() * MathHelper.RADIANS_PER_DEGREE);
             head.setRotY(entityData.netHeadYaw() * MathHelper.RADIANS_PER_DEGREE);
 

@@ -1,4 +1,4 @@
-package com.sandymandy.blockhard.entity.client;
+package com.sandymandy.blockhard.entity.client.lucyClient;
 
 import com.sandymandy.blockhard.BlockHard;
 import com.sandymandy.blockhard.entity.custom.LucyEnitiy;
@@ -6,7 +6,6 @@ import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.EntityRendererFactory;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Identifier;
-import software.bernie.geckolib.model.GeoModel;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
 public class LucyRenderer extends GeoEntityRenderer<LucyEnitiy> {
