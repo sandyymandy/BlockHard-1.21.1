@@ -12,7 +12,7 @@ public class ModEntities {
     public static final EntityType<LucyEnitiy> LUCY = Registry.register(Registries.ENTITY_TYPE,
             Identifier.of(BlockHard.MOD_ID, "lucy"),
             EntityType.Builder.create(LucyEnitiy::new, SpawnGroup.CREATURE)
-                    .dimensions(.5f, 1.9f).build());
+                    .dimensions(.5f, 1.95f).build());
 
     public static void registerModEntities(){
         BlockHard.LOGGER.info("Registering Mod Entities for " + BlockHard.MOD_ID);

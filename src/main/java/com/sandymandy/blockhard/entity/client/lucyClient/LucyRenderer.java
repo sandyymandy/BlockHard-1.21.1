@@ -2,10 +2,13 @@ package com.sandymandy.blockhard.entity.client.lucyClient;
 
 import com.sandymandy.blockhard.BlockHard;
 import com.sandymandy.blockhard.entity.custom.LucyEnitiy;
+import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.EntityRendererFactory;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Identifier;
+import org.jetbrains.annotations.Nullable;
+import software.bernie.geckolib.cache.object.BakedGeoModel;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
 public class LucyRenderer extends GeoEntityRenderer<LucyEnitiy> {
@@ -23,5 +26,36 @@ public class LucyRenderer extends GeoEntityRenderer<LucyEnitiy> {
                        VertexConsumerProvider bufferSource, int packedLight) {
 
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
+    }
+
+    @Override
+    public void preRender(MatrixStack poseStack, LucyEnitiy entity, BakedGeoModel model,
+                          VertexConsumerProvider bufferSource, VertexConsumer buffer,
+                          boolean isReRender, float partialTick, int packedLight,
+                          int packedOverlay, int colour) {
+
+        super.preRender(poseStack, entity, model, bufferSource, buffer, isReRender, partialTick,
+                packedLight, packedOverlay, colour);
+
+        // Always show bones in shownBones
+        if (entity.shownBones != null) {
+            for (String boneName : entity.shownBones) {
+                model.getBone(boneName).ifPresent(bone -> {
+                    bone.setHidden(false);
+                    bone.setChildrenHidden(false);
+                });
+            }
+        }
+
+        // Show or hide bones in hiddenBones based on flag
+        if (entity.hiddenBones != null) {
+            for (String boneName : entity.hiddenBones) {
+                model.getBone(boneName).ifPresent(bone -> {
+                    boolean visible = entity.showHiddenBones; // boolean flag on entity
+                    bone.setHidden(!visible);
+                    bone.setChildrenHidden(!visible);
+                });
+            }
+        }
     }
 }
