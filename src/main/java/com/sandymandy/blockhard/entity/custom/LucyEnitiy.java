@@ -20,7 +20,6 @@ import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animatable.instance.SingletonAnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimationController;
 import software.bernie.geckolib.animation.*;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
