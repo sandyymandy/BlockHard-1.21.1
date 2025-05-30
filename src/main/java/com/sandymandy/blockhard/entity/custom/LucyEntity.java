@@ -41,12 +41,6 @@ public class LucyEntity extends TameableEntity implements GeoEntity {
     private static final TrackedData<Boolean> SITTING =
             DataTracker.registerData(LucyEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
 
-    private final DefaultedList<ItemStack> items = DefaultedList.ofSize(12, ItemStack.EMPTY); // or any number of slots you want
-
-
-    public DefaultedList<ItemStack> getItems() {
-        return items;
-    }
     @Override
     protected void initDataTracker(DataTracker.Builder builder) {
         super.initDataTracker(builder);
@@ -72,13 +66,14 @@ public class LucyEntity extends TameableEntity implements GeoEntity {
             return ActionResult.SUCCESS;
         }
 
-        if(!this.getWorld().isClient && isOwner(player) && this.isTamed() && hand.equals(Hand.MAIN_HAND) && player.isSneaking()) {
-            setSit(!isSitting());
-            return ActionResult.SUCCESS;
-        }
-
-        if (!this.getWorld().isClient && isOwner(player) && this.isTamed() && hand.equals(Hand.MAIN_HAND)) {
-            return ActionResult.SUCCESS;
+        if(!this.getWorld().isClient && isOwner(player) && this.isTamed() && hand.equals(Hand.MAIN_HAND)) {
+            if(player.isSneaking()) {
+                setSit(!isSitting());
+                return ActionResult.SUCCESS;
+            }
+            else {
+                return ActionResult.PASS;
+            }
         }
 
         if(itemInHand.equals(tamedWith) && this.isTamed()){
