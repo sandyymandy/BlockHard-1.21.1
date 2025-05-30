@@ -878,13 +878,7 @@
 			"bones": {
 				"body": {
 					"position": {
-						"0.0": {
-							"vector": [0, -5, 0]
-						},
-						"4.12": {
-							"vector": [0, -5, 0],
-							"easing": "easeInOutSine"
-						}
+						"vector": [0, -10.75, 0]
 					}
 				},
 				"armR": {
@@ -1236,7 +1230,7 @@
 				}
 			}
 		},
-		"animation.lucy.fall": {
+		"animation.lucy.fly": {
 			"loop": true,
 			"animation_length": 0.84,
 			"bones": {
@@ -1370,7 +1364,7 @@
 				}
 			}
 		},
-		"animation.lucy.fall2": {
+		"animation.lucy.fly2": {
 			"loop": true,
 			"animation_length": 0.84,
 			"bones": {

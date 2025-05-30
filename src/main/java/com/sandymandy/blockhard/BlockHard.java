@@ -1,7 +1,7 @@
 package com.sandymandy.blockhard;
 
 import com.sandymandy.blockhard.entity.ModEntities;
-import com.sandymandy.blockhard.entity.custom.LucyEnitiy;
+import com.sandymandy.blockhard.entity.custom.LucyEntity;
 import com.sandymandy.blockhard.item.ModItemGroups;
 import com.sandymandy.blockhard.item.ModItems;
 import net.fabricmc.api.ModInitializer;
@@ -26,6 +26,6 @@ public class BlockHard implements ModInitializer {
 		ModItemGroups.registerItemGroups();
 		ModItems.registerModItems();
 		ModEntities.registerModEntities();
-		FabricDefaultAttributeRegistry.register(ModEntities.LUCY, LucyEnitiy.createAttributes());
+		FabricDefaultAttributeRegistry.register(ModEntities.LUCY, LucyEntity.createAttributes());
 	}
 }

@@ -1,0 +1,196 @@
+package com.sandymandy.blockhard.entity.custom;
+
+
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.ai.goal.*;
+import net.minecraft.entity.attribute.DefaultAttributeContainer;
+import net.minecraft.entity.attribute.EntityAttributes;
+import net.minecraft.entity.data.DataTracker;
+import net.minecraft.entity.data.TrackedData;
+import net.minecraft.entity.data.TrackedDataHandlerRegistry;
+import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.entity.passive.PassiveEntity;
+import net.minecraft.entity.passive.TameableEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.recipe.Ingredient;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.Hand;
+import net.minecraft.util.collection.DefaultedList;
+import net.minecraft.world.World;
+import org.jetbrains.annotations.Nullable;
+import software.bernie.geckolib.animatable.GeoAnimatable;
+import software.bernie.geckolib.animatable.GeoEntity;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animatable.instance.SingletonAnimatableInstanceCache;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.*;
+import java.util.*;
+
+public class LucyEntity extends TameableEntity implements GeoEntity {
+    private AnimatableInstanceCache cache = new SingletonAnimatableInstanceCache(this);
+    public Set<String> hiddenBones;
+    public Set<String> shownBones;
+    public boolean showHiddenBones = false;
+    private final Item tamedWith = Items.ALLIUM;
+    public final int  maxRelationshipLevel = 3;
+    public int currentRelationshipLevel;
+    private static final TrackedData<Boolean> SITTING =
+            DataTracker.registerData(LucyEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+
+    private final DefaultedList<ItemStack> items = DefaultedList.ofSize(12, ItemStack.EMPTY); // or any number of slots you want
+
+
+    public DefaultedList<ItemStack> getItems() {
+        return items;
+    }
+    @Override
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(SITTING, false);
+    }
+
+    public LucyEntity(EntityType<? extends TameableEntity> entityType, World world) {
+        super(entityType, world);
+    }
+
+
+
+    @Override
+    public ActionResult interactMob(PlayerEntity player, Hand hand) {
+        ItemStack itemStack = player.getStackInHand(hand);
+        Item itemInHand = itemStack.getItem();
+
+
+        if (!this.getWorld().isClient && !this.isTamed() && itemInHand.equals(tamedWith)) {
+            this.setOwner(player);
+            itemStack.decrement(1);
+            this.getWorld().sendEntityStatus(this, (byte) 7);
+            return ActionResult.SUCCESS;
+        }
+
+        if(!this.getWorld().isClient && isOwner(player) && this.isTamed() && hand.equals(Hand.MAIN_HAND) && player.isSneaking()) {
+            setSit(!isSitting());
+            return ActionResult.SUCCESS;
+        }
+
+        if (!this.getWorld().isClient && isOwner(player) && this.isTamed() && hand.equals(Hand.MAIN_HAND)) {
+            return ActionResult.SUCCESS;
+        }
+
+        if(itemInHand.equals(tamedWith) && this.isTamed()){
+            return ActionResult.PASS;
+        }
+
+        return super.interactMob(player, hand);
+    }
+
+    private void setSit(boolean sitting) {
+        this.dataTracker.set(SITTING, sitting);
+        super.setSitting(sitting);
+    }
+
+    public boolean isSittingdown() {
+        return this.dataTracker.get(SITTING);
+
+    }
+
+    @Override
+    protected void initGoals() {
+        this.goalSelector.add(0, new SwimGoal(this));
+//        this.goalSelector.add(1, new TameableEntity.TameableEscapeDangerGoal(1.5, DamageTypeTags.PANIC_ENVIRONMENTAL_CAUSES));
+        this.goalSelector.add(2, new SitGoal(this));
+        this.goalSelector.add(1, new EscapeDangerGoal(this, 1.2));
+        this.goalSelector.add(4, new MeleeAttackGoal(this, 1.5, true));
+        this.goalSelector.add(5, new FollowOwnerGoal(this, 1.0, 10.0F, 2.0F));
+        this.goalSelector.add(8, new TemptGoal(this, 1.25D, Ingredient.ofItems(Items.ALLIUM), false));
+        this.goalSelector.add(9, new WanderAroundGoal(this, 1.0D));
+        this.goalSelector.add(6, new LookAtEntityGoal(this, PlayerEntity.class, 6.0F));
+        this.goalSelector.add(7, new LookAroundGoal(this));
+        this.targetSelector.add(1, new TrackOwnerAttackerGoal(this));
+        this.targetSelector.add(2, new AttackWithOwnerGoal(this));
+
+    }
+
+    public static DefaultAttributeContainer.Builder createAttributes() {
+        return MobEntity.createMobAttributes()
+                .add(EntityAttributes.GENERIC_MAX_HEALTH, 20)
+                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, .20)
+                .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 2);
+//                .add(EntityAttributes.GENERIC_ARMOR, armor);
+
+    }
+
+
+    @Override
+    public boolean isBreedingItem(ItemStack stack) {
+        return false;
+    }
+
+    @Override
+    public @Nullable PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
+        return null;
+    }
+
+    @Override
+    public void registerControllers(AnimatableManager.ControllerRegistrar controllerRegistrar) {
+        controllerRegistrar.add(new AnimationController<>(this, "controller", 0, this::predicate).transitionLength(3)); // sets the transition length to the next animation as 3 in game ticks
+    }
+
+    private <lucyentity extends GeoAnimatable> PlayState predicate(AnimationState<lucyentity> lucyEntityAnimationState) {
+        if (!this.isOnGround() && this.getVelocity().getY() < 0) {
+            lucyEntityAnimationState.getController().setAnimation(RawAnimation.begin().then("animation.lucy.fall", Animation.LoopType.LOOP));
+            toggleModelBones("steve", false);
+            return PlayState.CONTINUE;
+        }
+
+        if (lucyEntityAnimationState.isMoving() &! isSittingdown()) {
+            lucyEntityAnimationState.getController().setAnimation(RawAnimation.begin().then("animation.lucy.walk", Animation.LoopType.LOOP));
+            toggleModelBones("steve", false);
+            return PlayState.CONTINUE;
+        }
+
+        if(isSittingdown()) {
+            lucyEntityAnimationState.getController().setAnimation(RawAnimation.begin().then("animation.lucy.sit", Animation.LoopType.LOOP));
+            toggleModelBones("steve", false);
+            return PlayState.CONTINUE;
+        }
+
+        lucyEntityAnimationState.getController().setAnimation(RawAnimation.begin().then("animation.lucy.idle", Animation.LoopType.LOOP));
+        toggleModelBones("steve", false);
+        return PlayState.CONTINUE;
+    }
+
+    @Override
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
+        return cache;
+    }
+
+    public void toggleModelBones(String bones, boolean visible) {
+        String[] boneArray = bones.replaceAll("\\s+", "").split(",");
+
+        if (this.hiddenBones == null) {
+            this.hiddenBones = new HashSet<>();
+        }
+        if (this.shownBones == null) {
+            this.shownBones = new HashSet<>();
+        }
+
+        List<String> boneList = Arrays.asList(boneArray);
+
+        if (visible) {
+            this.hiddenBones.removeAll(boneList);
+            this.shownBones.addAll(boneList);
+            this.showHiddenBones = true;
+        } else {
+            this.shownBones.removeAll(boneList);
+            this.hiddenBones.addAll(boneList);
+            this.showHiddenBones = false;
+        }
+
+    }
+
+}

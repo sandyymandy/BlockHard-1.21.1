@@ -1,7 +1,7 @@
 package com.sandymandy.blockhard.entity;
 
 import com.sandymandy.blockhard.BlockHard;
-import com.sandymandy.blockhard.entity.custom.LucyEnitiy;
+import com.sandymandy.blockhard.entity.custom.LucyEntity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.registry.Registries;
@@ -9,9 +9,9 @@ import net.minecraft.registry.Registry;
 import net.minecraft.util.Identifier;
 
 public class ModEntities {
-    public static final EntityType<LucyEnitiy> LUCY = Registry.register(Registries.ENTITY_TYPE,
+    public static final EntityType<LucyEntity> LUCY = Registry.register(Registries.ENTITY_TYPE,
             Identifier.of(BlockHard.MOD_ID, "lucy"),
-            EntityType.Builder.create(LucyEnitiy::new, SpawnGroup.CREATURE)
+            EntityType.Builder.create(LucyEntity::new, SpawnGroup.CREATURE)
                     .dimensions(.5f, 1.95f).build());
 
     public static void registerModEntities(){
