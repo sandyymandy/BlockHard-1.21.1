@@ -68,11 +68,11 @@ public class LucyEntity extends TameableEntity implements GeoEntity {
 
         if(!this.getWorld().isClient && isOwner(player) && this.isTamed() && hand.equals(Hand.MAIN_HAND)) {
             if(player.isSneaking()) {
-                setSit(!isSitting());
                 return ActionResult.SUCCESS;
             }
             else {
-                return ActionResult.PASS;
+                setSit(!isSitting());
+                return ActionResult.SUCCESS;
             }
         }
 
@@ -97,14 +97,14 @@ public class LucyEntity extends TameableEntity implements GeoEntity {
     protected void initGoals() {
         this.goalSelector.add(0, new SwimGoal(this));
 //        this.goalSelector.add(1, new TameableEntity.TameableEscapeDangerGoal(1.5, DamageTypeTags.PANIC_ENVIRONMENTAL_CAUSES));
-        this.goalSelector.add(2, new SitGoal(this));
-        this.goalSelector.add(1, new EscapeDangerGoal(this, 1.2));
-        this.goalSelector.add(4, new MeleeAttackGoal(this, 1.5, true));
-        this.goalSelector.add(5, new FollowOwnerGoal(this, 1.0, 10.0F, 2.0F));
-        this.goalSelector.add(8, new TemptGoal(this, 1.25D, Ingredient.ofItems(Items.ALLIUM), false));
-        this.goalSelector.add(9, new WanderAroundGoal(this, 1.0D));
-        this.goalSelector.add(6, new LookAtEntityGoal(this, PlayerEntity.class, 6.0F));
-        this.goalSelector.add(7, new LookAroundGoal(this));
+        this.goalSelector.add(1, new SitGoal(this));
+        this.goalSelector.add(2, new EscapeDangerGoal(this, 1.2));
+        this.goalSelector.add(3, new MeleeAttackGoal(this, 1.5, true));
+        this.goalSelector.add(4, new FollowOwnerGoal(this, 1.0, 10.0F, 2.0F));
+        this.goalSelector.add(5, new TemptGoal(this, 1.25D, Ingredient.ofItems(Items.ALLIUM), false));
+        this.goalSelector.add(6, new WanderAroundGoal(this, 1.0D));
+        this.goalSelector.add(7, new LookAtEntityGoal(this, PlayerEntity.class, 6.0F));
+        this.goalSelector.add(8, new LookAroundGoal(this));
         this.targetSelector.add(1, new TrackOwnerAttackerGoal(this));
         this.targetSelector.add(2, new AttackWithOwnerGoal(this));
 
@@ -136,7 +136,7 @@ public class LucyEntity extends TameableEntity implements GeoEntity {
     }
 
     private <lucyentity extends GeoAnimatable> PlayState predicate(AnimationState<lucyentity> lucyEntityAnimationState) {
-        if (!this.isOnGround() && this.getVelocity().getY() < 0) {
+        if ((!this.isOnGround() && this.getVelocity().getY() < 0) &! isSittingdown()) {
             lucyEntityAnimationState.getController().setAnimation(RawAnimation.begin().then("animation.lucy.fall", Animation.LoopType.LOOP));
             toggleModelBones("steve", false);
             return PlayState.CONTINUE;
