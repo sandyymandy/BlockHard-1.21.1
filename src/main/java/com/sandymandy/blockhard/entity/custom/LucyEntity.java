@@ -1,6 +1,9 @@
 package com.sandymandy.blockhard.entity.custom;
 
 
+import com.sandymandy.blockhard.util.inventory.GirlInventory;
+import com.sandymandy.blockhard.screen.LucyScreenHandler;
+import net.minecraft.entity.EntityStatuses;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ai.goal.*;
 import net.minecraft.entity.attribute.DefaultAttributeContainer;
@@ -12,10 +15,16 @@ import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.inventory.Inventories;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.recipe.Ingredient;
+import net.minecraft.registry.RegistryWrapper;
+import net.minecraft.screen.NamedScreenHandlerFactory;
+import net.minecraft.screen.ScreenHandler;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
@@ -30,8 +39,8 @@ import software.bernie.geckolib.animation.AnimationController;
 import software.bernie.geckolib.animation.*;
 import java.util.*;
 
-public class LucyEntity extends TameableEntity implements GeoEntity {
-    private AnimatableInstanceCache cache = new SingletonAnimatableInstanceCache(this);
+public class LucyEntity extends TameableEntity implements GeoEntity, NamedScreenHandlerFactory, GirlInventory {
+    private final AnimatableInstanceCache cache = new SingletonAnimatableInstanceCache(this);
     public Set<String> hiddenBones;
     public Set<String> shownBones;
     public boolean showHiddenBones = false;
@@ -40,6 +49,7 @@ public class LucyEntity extends TameableEntity implements GeoEntity {
     public int currentRelationshipLevel;
     private static final TrackedData<Boolean> SITTING =
             DataTracker.registerData(LucyEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+    private final DefaultedList<ItemStack> inventory = DefaultedList.ofSize(TOTAL_SLOTS,ItemStack.EMPTY);
 
     @Override
     protected void initDataTracker(DataTracker.Builder builder) {
@@ -51,7 +61,34 @@ public class LucyEntity extends TameableEntity implements GeoEntity {
         super(entityType, world);
     }
 
+    @Override
+    public DefaultedList<ItemStack> getItems() {
+        return inventory;
+    }
 
+    @Override
+    public ScreenHandler createMenu(int syncId, PlayerInventory playerInventory, PlayerEntity player) {
+        return new LucyScreenHandler(syncId,playerInventory,this);
+    }
+
+
+    @Override
+    public NbtCompound writeNbt(NbtCompound nbt) {
+        super.writeNbt(nbt);
+
+        RegistryWrapper.WrapperLookup registryLookup = this.getWorld().getRegistryManager();
+        Inventories.writeNbt(nbt, this.inventory, registryLookup);
+
+        return nbt;
+    }
+
+    @Override
+    public void readNbt(NbtCompound nbt) {
+        super.readNbt(nbt);
+
+        RegistryWrapper.WrapperLookup registryLookup = this.getWorld().getRegistryManager();
+        Inventories.readNbt(nbt, this.inventory, registryLookup);
+    }
 
     @Override
     public ActionResult interactMob(PlayerEntity player, Hand hand) {
@@ -60,14 +97,14 @@ public class LucyEntity extends TameableEntity implements GeoEntity {
 
 
         if (!this.getWorld().isClient && !this.isTamed() && itemInHand.equals(tamedWith)) {
-            this.setOwner(player);
-            itemStack.decrement(1);
-            this.getWorld().sendEntityStatus(this, (byte) 7);
+            itemStack.decrementUnlessCreative(1,player);
+            this.tryTame(player);
             return ActionResult.SUCCESS;
         }
 
         if(!this.getWorld().isClient && isOwner(player) && this.isTamed() && hand.equals(Hand.MAIN_HAND)) {
             if(player.isSneaking()) {
+                player.openHandledScreen(this);
                 return ActionResult.SUCCESS;
             }
             else {
@@ -81,6 +118,18 @@ public class LucyEntity extends TameableEntity implements GeoEntity {
         }
 
         return super.interactMob(player, hand);
+    }
+
+    private void tryTame(PlayerEntity player) {
+        if (this.random.nextInt(3) == 0) {
+            this.setOwner(player);
+            this.navigation.stop();
+            setTarget(null);
+            setSit(true);
+            this.getWorld().sendEntityStatus(this, EntityStatuses.ADD_POSITIVE_PLAYER_REACTION_PARTICLES);
+        } else {
+            this.getWorld().sendEntityStatus(this, EntityStatuses.ADD_NEGATIVE_PLAYER_REACTION_PARTICLES);
+        }
     }
 
     private void setSit(boolean sitting) {
@@ -177,15 +226,16 @@ public class LucyEntity extends TameableEntity implements GeoEntity {
         List<String> boneList = Arrays.asList(boneArray);
 
         if (visible) {
-            this.hiddenBones.removeAll(boneList);
+            boneList.forEach(this.hiddenBones::remove);
             this.shownBones.addAll(boneList);
             this.showHiddenBones = true;
         } else {
-            this.shownBones.removeAll(boneList);
+            boneList.forEach(this.shownBones::remove);
             this.hiddenBones.addAll(boneList);
             this.showHiddenBones = false;
         }
 
     }
+
 
 }

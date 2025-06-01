@@ -3,10 +3,13 @@ package com.sandymandy.blockhard;
 import com.sandymandy.blockhard.entity.custom.LucyEntity;
 import com.sandymandy.blockhard.item.ModItemGroups;
 import com.sandymandy.blockhard.item.ModItems;
+import com.sandymandy.blockhard.screen.LucyScreenHandler;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
+import net.minecraft.resource.featuretoggle.FeatureSet;
+import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.util.Identifier;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
@@ -26,7 +29,7 @@ public class BlockHard implements ModInitializer {
 			Identifier.of(BlockHard.MOD_ID, "lucy"), EntityType.Builder.create(LucyEntity::new, SpawnGroup.CREATURE).dimensions(.5f, 1.95f).build());
 
 	// Initialize ScreenHandlers
-
+	public static final ScreenHandlerType<LucyScreenHandler> LUCY_SCREEN_HANDLER = Registry.register(Registries.SCREEN_HANDLER, Identifier.of(MOD_ID, "lucy_screen"), new ScreenHandlerType<>(LucyScreenHandler::new, FeatureSet.empty()));
 
 	@Override
 	public void onInitialize() {
