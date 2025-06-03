@@ -35,7 +35,6 @@ public class LucyRenderer extends DynamicGeoEntityRenderer<LucyEntity> {
     @Override
     public void render(LucyEntity entity, float entityYaw, float partialTick, MatrixStack poseStack,
                        VertexConsumerProvider bufferSource, int packedLight) {
-
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
     }
 

@@ -29,7 +29,8 @@ public class BlockHard implements ModInitializer {
 			Identifier.of(BlockHard.MOD_ID, "lucy"), EntityType.Builder.create(LucyEntity::new, SpawnGroup.CREATURE).dimensions(.5f, 1.95f).build());
 
 	// Initialize ScreenHandlers
-	public static final ScreenHandlerType<LucyScreenHandler> LUCY_SCREEN_HANDLER = Registry.register(Registries.SCREEN_HANDLER, Identifier.of(MOD_ID, "lucy_screen"), new ScreenHandlerType<>(LucyScreenHandler::new, FeatureSet.empty()));
+	public static final ScreenHandlerType<LucyScreenHandler> LUCY_SCREEN_HANDLER = Registry.register(Registries.SCREEN_HANDLER, Identifier.of(MOD_ID, "lucy_screen"),
+			new ScreenHandlerType<>(LucyScreenHandler::new, FeatureSet.empty()));
 
 	@Override
 	public void onInitialize() {
