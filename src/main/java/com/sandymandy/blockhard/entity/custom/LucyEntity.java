@@ -131,7 +131,7 @@ public class LucyEntity extends TameableEntity implements GeoEntity, NamedScreen
         }
 
         if(!this.getWorld().isClient && this.isTamed() &! isOwner(player) && (hand.equals(Hand.MAIN_HAND) || itemInHand.equals(tamedWith))){
-            player.sendMessage(Text.literal("She's Already In A Relationship With " + this.getOwner().getName() ), true);
+            player.sendMessage(Text.literal("She's Already In A Relationship With Someone" ), true);
             return ActionResult.FAIL;
         }
 
@@ -167,7 +167,7 @@ public class LucyEntity extends TameableEntity implements GeoEntity, NamedScreen
             setTarget(null);
             setSit(true);
             this.getWorld().sendEntityStatus(this, EntityStatuses.ADD_POSITIVE_PLAYER_REACTION_PARTICLES);
-            player.sendMessage(Text.literal("You Asked " + entityName + " Out And She Said §aYes " + this.getOwner().getName() ), true);
+            player.sendMessage(Text.literal("You Asked " + entityName + " Out And She Said §aYes" ), true);
             this.setBasePos(this.getBlockPos());
         } else {
             this.getWorld().sendEntityStatus(this, EntityStatuses.ADD_NEGATIVE_PLAYER_REACTION_PARTICLES);

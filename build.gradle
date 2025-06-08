@@ -50,13 +50,13 @@ processResources {
 	}
 }
 
- sourceSets {
-	 main {
-		 resources {
-			 srcDir 'src/main/resources'
-		 }
-	 }
- }
+// sourceSets {
+//	 main {
+//		 resources {
+//			 srcDir 'src/main/resources'
+//		 }
+//	 }
+// }
 
 tasks.withType(JavaCompile).configureEach {
 	it.options.release = 21

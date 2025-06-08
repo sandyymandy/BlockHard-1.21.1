@@ -74,8 +74,8 @@ public class LucyModel extends GeoModel<LucyEntity> {
 //        defaultRotations.putIfAbsent("boobs", new Vec3d(boobs.getRotX(), boobs.getRotY(), boobs.getRotZ()));
 
 
-        jiggleMap.putIfAbsent("boobL", new JigglePhysics(0.2, 0.1));
-        jiggleMap.putIfAbsent("boobR", new JigglePhysics(0.2, 0.1));
+        jiggleMap.putIfAbsent("boobL", new JigglePhysics(0.2, 0.3));
+        jiggleMap.putIfAbsent("boobR", new JigglePhysics(0.2, 0.3));
 //        jiggleMap.putIfAbsent("boobs", new JigglePhysics(0.2, 0.1));
 
 
