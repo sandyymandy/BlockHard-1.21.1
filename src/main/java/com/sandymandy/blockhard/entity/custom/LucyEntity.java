@@ -4,8 +4,10 @@ package com.sandymandy.blockhard.entity.custom;
 import com.sandymandy.blockhard.util.inventory.GirlInventory;
 import com.sandymandy.blockhard.util.GlobleMessages;
 import com.sandymandy.blockhard.screen.LucyScreenHandler;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityStatuses;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.goal.*;
 import net.minecraft.entity.attribute.DefaultAttributeContainer;
 import net.minecraft.entity.attribute.EntityAttributes;
@@ -33,6 +35,7 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animatable.GeoAnimatable;
@@ -56,6 +59,11 @@ public class LucyEntity extends TameableEntity implements GeoEntity, NamedScreen
     private final String entityName = "Lucy";
     private static final int MaxHealth = 20;
     private BlockPos basePos;
+    private LivingEntity attackTarget;
+    private int ticksSinceLastHit;
+    private static final int MAX_TICKS_NO_HIT = 20 * 20;
+    public float previousYaw = 0;
+    public Vec3d previousVelocity = Vec3d.ZERO;
 
 
 
@@ -77,7 +85,7 @@ public class LucyEntity extends TameableEntity implements GeoEntity, NamedScreen
 
     @Override
     public ScreenHandler createMenu(int syncId, PlayerInventory playerInventory, PlayerEntity player) {
-        return new LucyScreenHandler(syncId, playerInventory, this);
+        return new LucyScreenHandler(syncId, playerInventory, this,this);
     }
 
 
@@ -123,13 +131,16 @@ public class LucyEntity extends TameableEntity implements GeoEntity, NamedScreen
         }
 
         if(!this.getWorld().isClient && this.isTamed() &! isOwner(player) && (hand.equals(Hand.MAIN_HAND) || itemInHand.equals(tamedWith))){
-            player.sendMessage(Text.literal("She's Already In A Relationship And §cIts Not You"), true);
+            player.sendMessage(Text.literal("She's Already In A Relationship With " + this.getOwner().getName() ), true);
             return ActionResult.FAIL;
         }
 
-        if (!this.getWorld().isClient && isOwner(player) && this.isTamed() && itemStack.isEmpty()) {
+        if (!this.getWorld().isClient && isOwner(player) && this.isTamed() && hand.equals(Hand.MAIN_HAND)) {
             if (player.isSneaking()) {
                 player.openHandledScreen(this);
+                this.getNavigation().stop();
+                this.setVelocity(0, 0, 0);
+                this.setTarget(null);
                 return ActionResult.SUCCESS;
             } else {
                 setSit(!isSitting());
@@ -138,8 +149,7 @@ public class LucyEntity extends TameableEntity implements GeoEntity, NamedScreen
         }
 
         if (!this.getWorld().isClient && isOwner(player) && this.isTamed() && itemInHand.equals(Items.COAL)) {
-            this.disown();
-            player.sendMessage(Text.literal("§cYou Broke Up With " + entityName), true);
+            this.disown(player);
             return ActionResult.SUCCESS;
         }
 
@@ -157,7 +167,7 @@ public class LucyEntity extends TameableEntity implements GeoEntity, NamedScreen
             setTarget(null);
             setSit(true);
             this.getWorld().sendEntityStatus(this, EntityStatuses.ADD_POSITIVE_PLAYER_REACTION_PARTICLES);
-            player.sendMessage(Text.literal("You Asked " + entityName + " Out And She Said §aYes"), true);
+            player.sendMessage(Text.literal("You Asked " + entityName + " Out And She Said §aYes " + this.getOwner().getName() ), true);
             this.setBasePos(this.getBlockPos());
         } else {
             this.getWorld().sendEntityStatus(this, EntityStatuses.ADD_NEGATIVE_PLAYER_REACTION_PARTICLES);
@@ -167,6 +177,7 @@ public class LucyEntity extends TameableEntity implements GeoEntity, NamedScreen
 
     private void setSit(boolean sitting) {
         this.dataTracker.set(SITTING, sitting);
+        this.setTarget(null);
         this.calculateDimensions();
         super.setSitting(sitting);
     }
@@ -301,8 +312,24 @@ public class LucyEntity extends TameableEntity implements GeoEntity, NamedScreen
 
         if(this.isTamed() && (this.getHealth() - amount <= 0.0F) &! (damageType.equals("outOfWorld") || damageType.equals("genericKill"))) {
             this.setHealth(MaxHealth);
-            new GlobleMessages().GlobleMessage(this.getWorld(), damageType);
-            new GlobleMessages().GlobleMessage(this.getWorld(), entityName + " died and respawned at base At " + (this.basePos.getX() + 0.5) + ", " + this.basePos.getY() + ", " + this.basePos.getZ() + 0.5);
+            // If basePos is still null, fall back to current position
+            BlockPos respawnPos = (this.basePos != null)
+                    ? this.basePos
+                    : this.getBlockPos();
+
+            // Send a message referencing whichever Pos we have
+            new GlobleMessages().GlobleMessage(
+                    this.getWorld(),
+                    entityName + " died and respawned at base: " +
+                            respawnPos.getX() + ", " +
+                            respawnPos.getY() + ", " +
+                            respawnPos.getZ()
+            );
+
+            // If basePos was null, make sure to set it now so future hits won’t NPE
+            if (this.basePos == null) {
+                this.basePos = respawnPos;
+            }
             teleportToBase();
 
             return false;
@@ -311,11 +338,12 @@ public class LucyEntity extends TameableEntity implements GeoEntity, NamedScreen
         }
     }
 
-    public void disown() {
+    public void disown(PlayerEntity player) {
         this.setTamed(false,true); // Mark the entity as untamed
         this.setOwnerUuid(null); // Remove the owner UUID
         this.setSit(false); // Ensure the entity is not sitting
         this.setInSittingPose(false); // Update the sitting pose
+        player.sendMessage(Text.literal("§cYou Broke Up With " + entityName), true);
     }
 
     public void setBasePos(BlockPos pos) {
@@ -323,13 +351,57 @@ public class LucyEntity extends TameableEntity implements GeoEntity, NamedScreen
     }
 
     public void teleportToBase() {
-        if (isSittingdown()) {
-            setSit(false);
-        }
-        if (this.basePos != null) {
+        if (this.basePos != null && this.getWorld() != null) {
             setSit(true);
-            this.teleport(this.basePos.getX() + 0.5, this.basePos.getY(), this.basePos.getZ() + 0.5, false);
+            this.teleport(this.basePos.getX(), this.basePos.getY(), this.basePos.getZ(), false);
         }
     }
 
+    @Override
+    public void setTarget(@Nullable LivingEntity target) {
+        super.setTarget(target);
+
+        if (target != null) {
+            attackTarget = target;
+            ticksSinceLastHit = 0; // reset countdown on new target
+        } else {
+            attackTarget = null;
+            ticksSinceLastHit = 0;
+        }
+    }
+
+    @Override
+    public boolean tryAttack(Entity target) {
+        boolean success = super.tryAttack(target);
+
+        if (success && target == attackTarget) {
+            ticksSinceLastHit = 0; // reset timer on successful hit
+        }
+
+        return success;
+    }
+
+    @Override
+    public void tickMovement() {
+        super.tickMovement();
+
+        if (attackTarget != null) {
+            ticksSinceLastHit++;
+
+            if (ticksSinceLastHit >= MAX_TICKS_NO_HIT) {
+                // Lost interest — stop attacking
+                this.setTarget(null);
+                attackTarget = null;
+                ticksSinceLastHit = 0;
+            }
+        }
+    }
+
+
+    public void tick() {
+        // Call this each tick in entity
+        super.tick();
+        previousYaw = getYaw();
+        previousVelocity = getVelocity();
+    }
 }

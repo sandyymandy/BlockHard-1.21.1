@@ -27,12 +27,7 @@ public interface GirlInventory extends Inventory {
     // ─────────────── Factory Methods ───────────────
 
     static GirlInventory of(DefaultedList<ItemStack> items) {
-        return new GirlInventory() {
-            @Override
-            public DefaultedList<ItemStack> getItems() {
-                return items;
-            }
-        };
+        return () -> items;
     }
 
     static GirlInventory ofSize() {
@@ -120,5 +115,15 @@ public interface GirlInventory extends Inventory {
 
         // Backpack slots (5–16) allow any item
         return slot >= BACKPACK_START && slot < BACKPACK_START + BACKPACK_SIZE;
+    }
+
+    static int getSlotForArmor(EquipmentSlot slot) {
+        return switch (slot) {
+            case HEAD -> ARMOR_HEAD_SLOT;
+            case CHEST -> ARMOR_CHEST_SLOT;
+            case LEGS -> ARMOR_LEGS_SLOT;
+            case FEET -> ARMOR_FEET_SLOT;
+            default -> -1;
+        };
     }
 }

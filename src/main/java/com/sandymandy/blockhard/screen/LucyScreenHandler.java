@@ -1,6 +1,8 @@
 package com.sandymandy.blockhard.screen;
 
 import com.sandymandy.blockhard.BlockHard;
+import com.sandymandy.blockhard.entity.custom.LucyEntity;
+import com.sandymandy.blockhard.screen.slot.PublicArmorSlot;
 import com.sandymandy.blockhard.util.inventory.GirlInventory;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.player.PlayerEntity;
@@ -13,20 +15,29 @@ import net.minecraft.item.SwordItem;
 import net.minecraft.item.ToolItem;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
+import net.minecraft.util.Identifier;
+import org.jetbrains.annotations.Nullable;
 
 public class LucyScreenHandler extends ScreenHandler {
     private final Inventory inventory;
+    private final LucyEntity lucy;
+    public static final Identifier EMPTY_HELMET_SLOT_TEXTURE = Identifier.ofVanilla( "item/empty_armor_slot_helmet");
+    public static final Identifier EMPTY_CHESTPLATE_SLOT_TEXTURE = Identifier.ofVanilla( "item/empty_armor_slot_chestplate");
+    public static final Identifier EMPTY_LEGGINGS_SLOT_TEXTURE = Identifier.ofVanilla( "item/empty_armor_slot_leggings");
+    public static final Identifier EMPTY_BOOTS_SLOT_TEXTURE = Identifier.ofVanilla( "item/empty_armor_slot_boots");
+
     // This constructor gets called on the client when the server wants it to open the screenHandler,
     // The client will call the other constructor with an empty Inventory and the screenHandler will automatically
     // sync this empty inventory with the inventory on the server.
-    public LucyScreenHandler(int syncId, PlayerInventory playerInventory) {
-        this(syncId, playerInventory, new SimpleInventory(17));
+    public static LucyScreenHandler create(int syncId, PlayerInventory playerInventory) {
+        return new LucyScreenHandler(syncId, playerInventory, new SimpleInventory(GirlInventory.TOTAL_SLOTS), null);
     }
 
     // This constructor gets called from the BlockEntity on the server without calling the other constructor first, the server knows the inventory of the container
     // and can therefore directly provide it as an argument. This inventory will then be synced to the client.
-    public LucyScreenHandler(int syncId, PlayerInventory playerInventory, Inventory inventory) {
+    public LucyScreenHandler(int syncId, PlayerInventory playerInventory, Inventory inventory, @Nullable LucyEntity lucy) {
         super(BlockHard.LUCY_SCREEN_HANDLER, syncId);
+        this.lucy = lucy;
         checkSize(inventory, GirlInventory.TOTAL_SLOTS);
         this.inventory = inventory;
 
@@ -46,27 +57,17 @@ public class LucyScreenHandler extends ScreenHandler {
             }
         });
 
-        // ───── Armor Slots (indices 1..4) ─────
-        this.addSlot(new Slot(inventory, GirlInventory.ARMOR_HEAD_SLOT, 8, 6) {
-            @Override public boolean canInsert(ItemStack stack) {
-                return stack.getItem() instanceof ArmorItem armor && armor.getSlotType() == EquipmentSlot.HEAD;
-            }
-        });
-        this.addSlot(new Slot(inventory, GirlInventory.ARMOR_CHEST_SLOT, 8, 24) {
-            @Override public boolean canInsert(ItemStack stack) {
-                return stack.getItem() instanceof ArmorItem armor && armor.getSlotType() == EquipmentSlot.CHEST;
-            }
-        });
-        this.addSlot(new Slot(inventory, GirlInventory.ARMOR_LEGS_SLOT, 8, 42) {
-            @Override public boolean canInsert(ItemStack stack) {
-                return stack.getItem() instanceof ArmorItem armor && armor.getSlotType() == EquipmentSlot.LEGS;
-            }
-        });
-        this.addSlot(new Slot(inventory, GirlInventory.ARMOR_FEET_SLOT, 8, 60) {
-            @Override public boolean canInsert(ItemStack stack) {
-                return stack.getItem() instanceof ArmorItem armor && armor.getSlotType() == EquipmentSlot.FEET;
-            }
-        });
+        if (lucy != null) {
+            this.addSlot(new PublicArmorSlot(inventory, lucy, EquipmentSlot.HEAD, GirlInventory.ARMOR_HEAD_SLOT, 8, 6, EMPTY_HELMET_SLOT_TEXTURE));
+            this.addSlot(new PublicArmorSlot(inventory, lucy, EquipmentSlot.CHEST, GirlInventory.ARMOR_CHEST_SLOT, 8, 24, EMPTY_CHESTPLATE_SLOT_TEXTURE));
+            this.addSlot(new PublicArmorSlot(inventory, lucy, EquipmentSlot.LEGS, GirlInventory.ARMOR_LEGS_SLOT, 8, 42, EMPTY_LEGGINGS_SLOT_TEXTURE));
+            this.addSlot(new PublicArmorSlot(inventory, lucy, EquipmentSlot.FEET, GirlInventory.ARMOR_FEET_SLOT, 8, 60, EMPTY_BOOTS_SLOT_TEXTURE));
+        } else {
+            this.addSlot(new Slot(inventory, GirlInventory.ARMOR_HEAD_SLOT, 8, 6));
+            this.addSlot(new Slot(inventory, GirlInventory.ARMOR_CHEST_SLOT, 8, 24));
+            this.addSlot(new Slot(inventory, GirlInventory.ARMOR_LEGS_SLOT, 8, 42));
+            this.addSlot(new Slot(inventory, GirlInventory.ARMOR_FEET_SLOT, 8, 60));
+        }
 
         int m;
         int l;
@@ -83,12 +84,12 @@ public class LucyScreenHandler extends ScreenHandler {
 
     }
 
+
     @Override
     public boolean canUse(PlayerEntity player) {
         return this.inventory.canPlayerUse(player);
     }
 
-    // Shift + Player Inv Slot
     @Override
     public ItemStack quickMove(PlayerEntity player, int invSlot) {
         ItemStack newStack = ItemStack.EMPTY;
@@ -98,51 +99,65 @@ public class LucyScreenHandler extends ScreenHandler {
             ItemStack originalStack = slot.getStack();
             newStack = originalStack.copy();
 
-            boolean isLucyInventory = invSlot < GirlInventory.TOTAL_SLOTS;
-            int playerInvStart = GirlInventory.TOTAL_SLOTS;
-            int playerInvEnd = this.slots.size();
+            boolean fromLucyInventory = invSlot < GirlInventory.TOTAL_SLOTS;
+            boolean moved = false;
 
-            if (isLucyInventory) {
-                // Move from Lucy to Player inventory
-                if (!this.insertItem(originalStack, playerInvStart, playerInvEnd, true)) {
+            if (fromLucyInventory) {
+                // Move from Lucy to player inventory
+                if (!this.insertItem(originalStack, GirlInventory.TOTAL_SLOTS, this.slots.size(), true)) {
                     return ItemStack.EMPTY;
                 }
-            } else {
-                // Move from Player to Lucy inventory
-                boolean moved = false;
+                moved = true;
 
-                // Try armor slots
+            } else {
+                // Move from player inventory to Lucy
+
+                // 1. Try armor slots
                 if (originalStack.getItem() instanceof ArmorItem armorItem) {
-                    int slotIndex = switch (armorItem.getSlotType()) {
+                    EquipmentSlot eqSlot = armorItem.getSlotType();
+                    int targetIndex = switch (eqSlot) {
                         case HEAD -> GirlInventory.ARMOR_HEAD_SLOT;
                         case CHEST -> GirlInventory.ARMOR_CHEST_SLOT;
                         case LEGS -> GirlInventory.ARMOR_LEGS_SLOT;
                         case FEET -> GirlInventory.ARMOR_FEET_SLOT;
                         default -> -1;
                     };
-                    if (slotIndex != -1 && this.slots.get(slotIndex).getStack().isEmpty()) {
-                        moved = this.insertItem(originalStack, slotIndex, slotIndex + 1, false);
+
+                    if (targetIndex != -1 && !this.slots.get(targetIndex).hasStack()) {
+                        if (this.insertItem(originalStack, targetIndex, targetIndex + 1, false)) {
+                            moved = true;
+                        }
                     }
                 }
 
-                // Try main hand slot
+                // 2. Try main hand slot for tools/swords
                 if (!moved && (originalStack.getItem() instanceof ToolItem || originalStack.getItem() instanceof SwordItem)) {
-                    Slot mainHand = this.slots.get(GirlInventory.MAIN_HAND_SLOT);
-                    if (mainHand.getStack().isEmpty()) {
-                        moved = this.insertItem(originalStack, GirlInventory.MAIN_HAND_SLOT, GirlInventory.MAIN_HAND_SLOT + 1, false);
+                    int mainIndex = GirlInventory.MAIN_HAND_SLOT;
+                    if (!this.slots.get(mainIndex).hasStack()) {
+                        if (this.insertItem(originalStack, mainIndex, mainIndex + 1, false)) {
+                            moved = true;
+                        }
                     }
                 }
 
-                // Try backpack slots
+                // 3. Fallback only if it's not equipment, or slots are full
                 if (!moved) {
-                    moved = this.insertItem(originalStack, GirlInventory.BACKPACK_START, GirlInventory.BACKPACK_SIZE + 1, false);
-                }
+                    boolean isArmor = originalStack.getItem() instanceof ArmorItem;
+                    boolean isToolOrSword = originalStack.getItem() instanceof ToolItem || originalStack.getItem() instanceof SwordItem;
 
-                if (!moved) {
-                    return ItemStack.EMPTY;
+                    if (!isArmor && !isToolOrSword) {
+                        // Not equipment → allowed to go into backpack
+                        if (this.insertItem(originalStack, GirlInventory.BACKPACK_START, GirlInventory.BACKPACK_START + GirlInventory.BACKPACK_SIZE, false)) {
+                            moved = true;
+                        }
+                    }
+
+                    // If it's equipment but failed to go into the right slot, deny fallback
+                    if (!moved) return ItemStack.EMPTY;
                 }
             }
 
+            // Final cleanup
             if (originalStack.isEmpty()) {
                 slot.setStack(ItemStack.EMPTY);
             } else {
@@ -151,6 +166,12 @@ public class LucyScreenHandler extends ScreenHandler {
         }
 
         return newStack;
+    }
+
+
+
+    public LucyEntity getLucy(){
+        return this.lucy;
     }
 
 }
