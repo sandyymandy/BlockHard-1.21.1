@@ -1,11 +1,15 @@
 package com.sandymandy.blockhard;
 
-import com.sandymandy.blockhard.entity.custom.LucyEntity;
+import com.sandymandy.blockhard.entity.lucy.LucyEntity;
 import com.sandymandy.blockhard.item.ModItemGroups;
 import com.sandymandy.blockhard.item.ModItems;
-import com.sandymandy.blockhard.screen.LucyScreenHandler;
+import com.sandymandy.blockhard.entity.lucy.LucyScreenHandler;
+import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.codec.PacketCodec;
+import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.resource.featuretoggle.FeatureFlags;
@@ -29,8 +33,24 @@ public class BlockHard implements ModInitializer {
 			Identifier.of(BlockHard.MOD_ID, "lucy"), EntityType.Builder.create(LucyEntity::new, SpawnGroup.CREATURE).dimensions(.5f, 1.85f).build());
 
 	// Initialize ScreenHandlers
-	public static final ScreenHandlerType<LucyScreenHandler> LUCY_SCREEN_HANDLER = Registry.register(Registries.SCREEN_HANDLER, Identifier.of(MOD_ID, "lucy_screen"),
-			new ScreenHandlerType<>(LucyScreenHandler::create, FeatureFlags.VANILLA_FEATURES));
+	public static final ExtendedScreenHandlerType<LucyScreenHandler, LucyScreenData> LUCY_SCREEN_HANDLER =
+			Registry.register(
+					Registries.SCREEN_HANDLER,
+					Identifier.of(BlockHard.MOD_ID, "lucy_screen"),
+					new ExtendedScreenHandlerType<>(
+							LucyScreenHandler::new, // (int syncId, PlayerInventory, LucyScreenData)
+							LucyScreenData.PACKET_CODEC
+					)
+			);
+
+	public record LucyScreenData(int entityId) {
+		public static final PacketCodec<RegistryByteBuf, LucyScreenData> PACKET_CODEC = PacketCodec.tuple(
+				PacketCodecs.VAR_INT,  // Codec for entityId
+				LucyScreenData::entityId,
+				LucyScreenData::new
+		);
+	}
+
 
 	@Override
 	public void onInitialize() {

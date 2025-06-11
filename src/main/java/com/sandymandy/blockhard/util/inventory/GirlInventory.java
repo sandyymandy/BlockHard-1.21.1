@@ -1,7 +1,6 @@
 package com.sandymandy.blockhard.util.inventory;
 
 import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.Inventories;
 import net.minecraft.item.ArmorItem;
@@ -9,32 +8,33 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.SwordItem;
 import net.minecraft.item.ToolItem;
 import net.minecraft.util.collection.DefaultedList;
+import net.minecraft.entity.player.PlayerEntity;
 
 public interface GirlInventory extends Inventory {
-    // ─────────────── SLOT INDICES ───────────────
-    int MAIN_HAND_SLOT     = 0;
-    int ARMOR_HEAD_SLOT    = 1;
-    int ARMOR_CHEST_SLOT   = 2;
-    int ARMOR_LEGS_SLOT    = 3;
-    int ARMOR_FEET_SLOT    = 4;
-    int BACKPACK_START     = 5;
-    int BACKPACK_SIZE      = 12;             // 5..16 inclusive
-    int TOTAL_SLOTS        = BACKPACK_START + BACKPACK_SIZE; // 17
+    // Slot indices
+    int MAIN_HAND_SLOT = 0;
+    int ARMOR_HEAD_SLOT = 1;
+    int ARMOR_CHEST_SLOT = 2;
+    int ARMOR_LEGS_SLOT = 3;
+    int ARMOR_FEET_SLOT = 4;
+    int BACKPACK_START = 5;
+    int BACKPACK_SIZE = 12;  // slots 5..16 inclusive
+    int TOTAL_SLOTS = BACKPACK_START + BACKPACK_SIZE;  // 17 total slots
 
-    // Must return the same instance every time
+    // Must always return the same instance backing the inventory
     DefaultedList<ItemStack> getItems();
 
-    // ─────────────── Factory Methods ───────────────
-
+    // Factory to create a GirlInventory backed by the given list
     static GirlInventory of(DefaultedList<ItemStack> items) {
         return () -> items;
     }
 
+    // Factory to create a new GirlInventory with empty slots
     static GirlInventory ofSize() {
         return of(DefaultedList.ofSize(TOTAL_SLOTS, ItemStack.EMPTY));
     }
 
-    // ─────────────── Inventory Logic ───────────────
+    // Inventory interface implementations
 
     @Override
     default int size() {
@@ -77,7 +77,7 @@ public interface GirlInventory extends Inventory {
 
     @Override
     default void markDirty() {
-        // Optional: Sync logic or custom behavior
+        // Optional: could sync inventory here, if needed
     }
 
     @Override
@@ -90,33 +90,34 @@ public interface GirlInventory extends Inventory {
         getItems().clear();
     }
 
-    // ─────────────── Custom Validation ───────────────
-
+    // Custom validation for item insertion based on slot
     default boolean isItemValid(int slot, ItemStack stack) {
-        if (stack.isEmpty()) return true; // Allow clearing
+        if (stack.isEmpty()) return true; // Allow clearing the slot
 
         if (slot == MAIN_HAND_SLOT) {
+            // Only allow tools and swords in main hand slot
             return stack.getItem() instanceof SwordItem || stack.getItem() instanceof ToolItem;
         }
 
         if (slot >= ARMOR_HEAD_SLOT && slot <= ARMOR_FEET_SLOT) {
+            // Armor slots must be armor matching the slot
             if (!(stack.getItem() instanceof ArmorItem armor)) return false;
 
-            EquipmentSlot target = switch (slot) {
+            EquipmentSlot expectedSlot = switch (slot) {
                 case ARMOR_HEAD_SLOT -> EquipmentSlot.HEAD;
                 case ARMOR_CHEST_SLOT -> EquipmentSlot.CHEST;
-                case ARMOR_LEGS_SLOT  -> EquipmentSlot.LEGS;
-                case ARMOR_FEET_SLOT  -> EquipmentSlot.FEET;
+                case ARMOR_LEGS_SLOT -> EquipmentSlot.LEGS;
+                case ARMOR_FEET_SLOT -> EquipmentSlot.FEET;
                 default -> null;
             };
-
-            return armor.getSlotType() == target;
+            return expectedSlot != null && armor.getSlotType() == expectedSlot;
         }
 
-        // Backpack slots (5–16) allow any item
+        // Backpack slots accept any item
         return slot >= BACKPACK_START && slot < BACKPACK_START + BACKPACK_SIZE;
     }
 
+    // Utility method to get slot index from EquipmentSlot
     static int getSlotForArmor(EquipmentSlot slot) {
         return switch (slot) {
             case HEAD -> ARMOR_HEAD_SLOT;

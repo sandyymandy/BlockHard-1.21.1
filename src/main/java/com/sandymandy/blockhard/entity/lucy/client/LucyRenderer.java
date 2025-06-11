@@ -1,7 +1,7 @@
-package com.sandymandy.blockhard.entity.client.lucyClient;
+package com.sandymandy.blockhard.entity.lucy.client;
 
 import com.sandymandy.blockhard.BlockHard;
-import com.sandymandy.blockhard.entity.custom.LucyEntity;
+import com.sandymandy.blockhard.entity.lucy.LucyEntity;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.EntityRendererFactory;

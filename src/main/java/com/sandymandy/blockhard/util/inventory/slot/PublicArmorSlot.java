@@ -1,4 +1,4 @@
-package com.sandymandy.blockhard.screen.slot;
+package com.sandymandy.blockhard.util.inventory.slot;
 
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.component.EnchantmentEffectComponentTypes;

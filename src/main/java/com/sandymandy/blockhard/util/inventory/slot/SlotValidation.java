@@ -1,5 +1,6 @@
-package com.sandymandy.blockhard.util.inventory;
+package com.sandymandy.blockhard.util.inventory.slot;
 
+import com.sandymandy.blockhard.util.inventory.GirlInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.slot.Slot;
 

@@ -1,7 +1,7 @@
-package com.sandymandy.blockhard.entity.client.lucyClient;
+package com.sandymandy.blockhard.entity.lucy.client;
 
 import com.sandymandy.blockhard.BlockHard;
-import com.sandymandy.blockhard.entity.custom.LucyEntity;
+import com.sandymandy.blockhard.entity.lucy.LucyEntity;
 import com.sandymandy.blockhard.util.JigglePhysics;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
@@ -55,7 +55,9 @@ public class LucyModel extends GeoModel<LucyEntity> {
 
         GeoBone leftBoob = getAnimationProcessor().getBone("boobL");
         GeoBone rightBoob = getAnimationProcessor().getBone("boobR");
-//        GeoBone boobs = getAnimationProcessor().getBone("boobs");
+        GeoBone leftCheek = getAnimationProcessor().getBone("cheekL");
+        GeoBone rightCheek = getAnimationProcessor().getBone("cheekR");
+
 
 
         if (leftBoob == null || rightBoob == null) return;
@@ -71,18 +73,21 @@ public class LucyModel extends GeoModel<LucyEntity> {
         // Save default rotations (only once)
         defaultRotations.putIfAbsent("boobL", new Vec3d(leftBoob.getRotX(), leftBoob.getRotY(), leftBoob.getRotZ()));
         defaultRotations.putIfAbsent("boobR", new Vec3d(rightBoob.getRotX(), rightBoob.getRotY(), rightBoob.getRotZ()));
-//        defaultRotations.putIfAbsent("boobs", new Vec3d(boobs.getRotX(), boobs.getRotY(), boobs.getRotZ()));
+        defaultRotations.putIfAbsent("cheekL", new Vec3d(leftCheek.getRotX(), leftCheek.getRotY(), leftCheek.getRotZ()));
+        defaultRotations.putIfAbsent("cheekR", new Vec3d(rightCheek.getRotX(), rightCheek.getRotY(), rightCheek.getRotZ()));
 
 
         jiggleMap.putIfAbsent("boobL", new JigglePhysics(0.2, 0.3));
         jiggleMap.putIfAbsent("boobR", new JigglePhysics(0.2, 0.3));
-//        jiggleMap.putIfAbsent("boobs", new JigglePhysics(0.2, 0.1));
+        jiggleMap.putIfAbsent("cheekL", new JigglePhysics(0.2, 0.1));
+        jiggleMap.putIfAbsent("cheekR", new JigglePhysics(0.2, 0.1));
 
 
         // Apply jiggle
         applyJiggle("boobL", leftBoob, inertiaForce, jiggleMap, defaultRotations);
         applyJiggle("boobR", rightBoob, inertiaForce, jiggleMap, defaultRotations);
-//        applyJiggle("boobs", boobs, inertiaForce, jiggleMap, defaultRotations);
+        applyJiggle("cheekL", leftCheek, inertiaForce, jiggleMap, defaultRotations);
+        applyJiggle("cheekR", rightCheek, inertiaForce, jiggleMap, defaultRotations);
 
 
         // Set head rotation

@@ -1,9 +1,9 @@
-package com.sandymandy.blockhard.screen;
+package com.sandymandy.blockhard.entity.lucy;
 
 import com.sandymandy.blockhard.BlockHard;
-import com.sandymandy.blockhard.entity.custom.LucyEntity;
-import com.sandymandy.blockhard.screen.slot.PublicArmorSlot;
+import com.sandymandy.blockhard.util.inventory.slot.PublicArmorSlot;
 import com.sandymandy.blockhard.util.inventory.GirlInventory;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
@@ -16,7 +16,7 @@ import net.minecraft.item.ToolItem;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.util.Identifier;
-import org.jetbrains.annotations.Nullable;
+import net.minecraft.world.World;
 
 public class LucyScreenHandler extends ScreenHandler {
     private final Inventory inventory;
@@ -26,20 +26,53 @@ public class LucyScreenHandler extends ScreenHandler {
     public static final Identifier EMPTY_LEGGINGS_SLOT_TEXTURE = Identifier.ofVanilla( "item/empty_armor_slot_leggings");
     public static final Identifier EMPTY_BOOTS_SLOT_TEXTURE = Identifier.ofVanilla( "item/empty_armor_slot_boots");
 
-    // This constructor gets called on the client when the server wants it to open the screenHandler,
-    // The client will call the other constructor with an empty Inventory and the screenHandler will automatically
-    // sync this empty inventory with the inventory on the server.
-    public static LucyScreenHandler create(int syncId, PlayerInventory playerInventory) {
-        return new LucyScreenHandler(syncId, playerInventory, new SimpleInventory(GirlInventory.TOTAL_SLOTS), null);
-    }
+//    // This constructor gets called on the client when the server wants it to open the screenHandler,
+//    // The client will call the other constructor with an empty Inventory and the screenHandler will automatically
+//    // sync this empty inventory with the inventory on the server.
+//    public static LucyScreenHandler create(int syncId, PlayerInventory playerInventory, net.minecraft.network.PacketByteBuf buf) {
+//        int entityId = buf.readVarInt();
+//        LucyEntity lucy = (LucyEntity) playerInventory.player.getWorld().getEntityById(entityId);
+//        return new LucyScreenHandler(syncId, playerInventory, new SimpleInventory(GirlInventory.TOTAL_SLOTS), lucy);
+//    }
 
-    // This constructor gets called from the BlockEntity on the server without calling the other constructor first, the server knows the inventory of the container
-    // and can therefore directly provide it as an argument. This inventory will then be synced to the client.
-    public LucyScreenHandler(int syncId, PlayerInventory playerInventory, Inventory inventory, @Nullable LucyEntity lucy) {
+
+
+    /*
+        public LucyScreenHandler(int syncId, PlayerInventory playerInventory, Inventory inventory, @Nullable LucyEntity lucy) {
         super(BlockHard.LUCY_SCREEN_HANDLER, syncId);
         this.lucy = lucy;
         checkSize(inventory, GirlInventory.TOTAL_SLOTS);
         this.inventory = inventory;
+    */
+
+    // The codec-compatible constructor
+    public LucyScreenHandler(int syncId, PlayerInventory playerInventory, BlockHard.LucyScreenData data) {
+        this(syncId, playerInventory, data.entityId());
+    }
+
+    // This constructor gets called from the BlockEntity on the server without calling the other constructor first, the server knows the inventory of the container
+    // and can therefore directly provide it as an argument. This inventory will then be synced to the client.
+    public LucyScreenHandler(int syncId, PlayerInventory playerInventory, int lucyId) {
+        super(BlockHard.LUCY_SCREEN_HANDLER, syncId);
+        PlayerEntity player = playerInventory.player;
+        World world = player.getWorld();
+
+        Entity entity = world.getEntityById(lucyId);
+        if (!(entity instanceof LucyEntity lucyEntity)) {
+            throw new IllegalStateException("LucyEntity not found or mismatched entity ID");
+        }
+        this.lucy = lucyEntity;
+
+        Inventory inventory;
+        if (lucy != null) {
+            inventory = lucy.getInventory(); // ← Use your custom implementation, not a copy
+        } else {
+            inventory = new SimpleInventory(GirlInventory.TOTAL_SLOTS);
+        }
+        this.inventory = inventory;
+
+        checkSize(inventory, GirlInventory.TOTAL_SLOTS);
+
 
         // ───── Backpack slots (4x3) = indices 5..16 ─────Add commentMore actions
         int slotIndex = GirlInventory.BACKPACK_START; // 5
@@ -170,8 +203,11 @@ public class LucyScreenHandler extends ScreenHandler {
 
 
 
+
     public LucyEntity getLucy(){
         return this.lucy;
     }
+
+
 
 }
