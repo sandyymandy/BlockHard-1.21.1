@@ -1,19 +1,21 @@
 package com.sandymandy.blockhard;
 
 import com.sandymandy.blockhard.entity.lucy.LucyEntity;
+import com.sandymandy.blockhard.entity.lucy.network.LucyButtonPacket;
 import com.sandymandy.blockhard.item.ModItemGroups;
 import com.sandymandy.blockhard.item.ModItems;
-import com.sandymandy.blockhard.entity.lucy.LucyScreenHandler;
+import com.sandymandy.blockhard.entity.lucy.screen.LucyScreenHandler;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.codec.PacketCodecs;
+import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
-import net.minecraft.resource.featuretoggle.FeatureFlags;
-import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.util.Identifier;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
@@ -43,6 +45,8 @@ public class BlockHard implements ModInitializer {
 					)
 			);
 
+
+
 	public record LucyScreenData(int entityId) {
 		public static final PacketCodec<RegistryByteBuf, LucyScreenData> PACKET_CODEC = PacketCodec.tuple(
 				PacketCodecs.VAR_INT,  // Codec for entityId
@@ -60,5 +64,25 @@ public class BlockHard implements ModInitializer {
 		ModItemGroups.registerItemGroups();
 		ModItems.registerModItems();
 		FabricDefaultAttributeRegistry.register(LUCY, LucyEntity.createAttributes());
+
+		// 1. Register payload type (C2S = client to server)
+		PayloadTypeRegistry.playC2S().register(LucyButtonPacket.ID, LucyButtonPacket.CODEC);
+
+		// 2. Register server-side receiver
+		ServerPlayNetworking.registerGlobalReceiver(
+				LucyButtonPacket.ID,
+				(packet, context) -> {
+					context.player().getServer().execute(() -> {
+						var entity = context.player().getWorld().getEntityById(packet.entityId());
+						if (entity instanceof LucyEntity lucy) {
+							switch (packet.actionId()) {
+								case "sit" -> lucy.setSit(!lucy.isSittingdown());
+								case "breakUp" -> lucy.disown(context.player());
+								default -> BlockHard.LOGGER.warn("Unknown Lucy action: " + packet.actionId());
+							}
+						}
+					});
+				}
+		);
 	}
 }

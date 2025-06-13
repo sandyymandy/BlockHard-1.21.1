@@ -1,15 +1,14 @@
-package com.sandymandy.blockhard.entity.lucy.client;
+package com.sandymandy.blockhard.entity.lucy.client.screen;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.sandymandy.blockhard.BlockHard;
 import com.sandymandy.blockhard.entity.lucy.LucyEntity;
-import com.sandymandy.blockhard.entity.lucy.LucyScreenHandler;
-import com.sandymandy.blockhard.entity.lucy.client.screen.LucyButtonAction;
-import com.sandymandy.blockhard.entity.lucy.client.screen.LucyButtonRegistry;
+import com.sandymandy.blockhard.entity.lucy.screen.LucyScreenHandler;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.render.GameRenderer;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -21,12 +20,14 @@ public class LucyScreen extends HandledScreen<LucyScreenHandler> {
     private static final int GUI_WIDTH = 176;
     private static final int GUI_HEIGHT = 170;
     private final LucyEntity lucy;
+    private final PlayerEntity player;
 
 
 
     public LucyScreen(LucyScreenHandler handler, PlayerInventory inventory, Text title) {
         super(handler, inventory, title);
-            this.lucy = handler.getLucy();
+        this.lucy = handler.getLucy();
+        this.player = inventory.player;
     }
 
     @Override
@@ -74,9 +75,10 @@ public class LucyScreen extends HandledScreen<LucyScreenHandler> {
             this.addDrawableChild(ButtonWidget.builder(
                     action.label(),
                     btn -> {
-                        if (lucy != null && client != null && client.player != null) {
+                        if (lucy != null && client != null && player != null) {
                             action.action().accept(lucy, client.player);  // Run the button's logic
                             this.client.setScreen(null);
+                            player.sendMessage(Text.literal("Screen: " + lucy.getId()));
                         }
                     }
             ).dimensions(startX, y, buttonWidth, buttonHeight).build());

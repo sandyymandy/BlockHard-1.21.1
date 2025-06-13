@@ -1,7 +1,7 @@
 package com.sandymandy.blockhard.entity.lucy;
 
 
-import com.sandymandy.blockhard.entity.lucy.client.LucyScreenHandlerFactory;
+import com.sandymandy.blockhard.entity.lucy.screen.LucyScreenHandlerFactory;
 import com.sandymandy.blockhard.util.inventory.GirlInventory;
 import com.sandymandy.blockhard.util.GlobleMessages;
 import net.minecraft.entity.Entity;
@@ -64,6 +64,10 @@ public class LucyEntity extends TameableEntity implements GeoEntity {
 
 
 
+    public LucyEntity(EntityType<? extends TameableEntity> entityType, World world) {
+        super(entityType, world);
+    }
+
     @Override
     protected void initDataTracker(DataTracker.Builder builder) {
         super.initDataTracker(builder);
@@ -71,44 +75,67 @@ public class LucyEntity extends TameableEntity implements GeoEntity {
 
     }
 
-    public LucyEntity(EntityType<? extends TameableEntity> entityType, World world) {
-        super(entityType, world);
-    }
-
 
     public GirlInventory getInventory() {
         return inventory;
     }
 
-
     @Override
-    public NbtCompound writeNbt(NbtCompound nbt) {
-        super.writeNbt(nbt);
+    protected void initGoals() {
+        this.goalSelector.add(0, new SitGoal(this));
+        this.goalSelector.add(1, new SwimGoal(this));
+        this.goalSelector.add(2, new TameableEscapeDangerGoal(1.5D, DamageTypeTags.PANIC_ENVIRONMENTAL_CAUSES));
+        this.goalSelector.add(3, new MeleeAttackGoal(this, 1.5, true));
+        this.goalSelector.add(4, new FollowOwnerGoal(this, 1.0, 10.0F, 2.0F));
+        this.goalSelector.add(5, new TemptGoal(this, 1.25D, Ingredient.ofItems(Items.ALLIUM), false));
+        this.goalSelector.add(6, new WanderAroundGoal(this, 1.0D));
+        this.goalSelector.add(7, new LookAtEntityGoal(this, PlayerEntity.class, 6.0F));
+        this.goalSelector.add(8, new LookAroundGoal(this));
+        this.targetSelector.add(1, new TrackOwnerAttackerGoal(this));
+        this.targetSelector.add(2, new AttackWithOwnerGoal(this));
+        this.targetSelector.add(2, new RevengeGoal(this));
 
-        RegistryWrapper.WrapperLookup registryLookup = this.getWorld().getRegistryManager();
-        Inventories.writeNbt(nbt, this.inventory.getItems(), registryLookup);
-        nbt.putBoolean("Sitting", this.isSittingdown());
-        if (this.basePos != null) {
-            nbt.putInt("BaseX", this.basePos.getX());
-            nbt.putInt("BaseY", this.basePos.getY());
-            nbt.putInt("BaseZ", this.basePos.getZ());}
-        return nbt;
+
+    }
+
+    public static DefaultAttributeContainer.Builder createAttributes() {
+        return MobEntity.createMobAttributes()
+                .add(EntityAttributes.GENERIC_MAX_HEALTH, MaxHealth)
+                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, .20)
+                .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 2);
+//                .add(EntityAttributes.GENERIC_ARMOR, armor);
+
     }
 
     @Override
-    public void readNbt(NbtCompound nbt) {
-        super.readNbt(nbt);
+    public void registerControllers(AnimatableManager.ControllerRegistrar controllerRegistrar) {
+        controllerRegistrar.add(new AnimationController<>(this, "controller", 0, this::predicate).transitionLength(3)); // sets the transition length to the next animation as 3 in game ticks
+    }
 
-        RegistryWrapper.WrapperLookup registryLookup = this.getWorld().getRegistryManager();
-        Inventories.readNbt(nbt, this.inventory.getItems(), registryLookup);
-        this.setSit(nbt.getBoolean("Sitting"));
-        if (nbt.contains("BaseX") && nbt.contains("BaseY") && nbt.contains("BaseZ")) {
-            int x = nbt.getInt("BaseX");
-            int y = nbt.getInt("BaseY");
-            int z = nbt.getInt("BaseZ");
-            this.basePos = new BlockPos(x, y, z);}
-
+    private <lucyentity extends GeoAnimatable> PlayState predicate(AnimationState<lucyentity> lucyEntityAnimationState) {
+        if (!this.isOnGround() &! isSittingdown()) {
+            lucyEntityAnimationState.getController().setAnimation(RawAnimation.begin().then("animation.lucy.fly", Animation.LoopType.LOOP));
+            toggleModelBones("steve", false);
+            return PlayState.CONTINUE;
         }
+
+        if (lucyEntityAnimationState.isMoving() &! isSittingdown()) {
+            lucyEntityAnimationState.getController().setAnimation(RawAnimation.begin().then("animation.lucy.walk", Animation.LoopType.LOOP));
+            toggleModelBones("steve", false);
+            return PlayState.CONTINUE;
+        }
+
+        if (isSittingdown()) {
+            lucyEntityAnimationState.getController().setAnimation(RawAnimation.begin().then("animation.lucy.sit", Animation.LoopType.LOOP));
+            toggleModelBones("steve", false);
+            return PlayState.CONTINUE;
+        }
+
+
+        lucyEntityAnimationState.getController().setAnimation(RawAnimation.begin().then("animation.lucy.idle", Animation.LoopType.LOOP));
+        toggleModelBones("steve", false);
+        return PlayState.CONTINUE;
+    }
 
     @Override
     public ActionResult interactMob(PlayerEntity player, Hand hand) {
@@ -135,7 +162,6 @@ public class LucyEntity extends TameableEntity implements GeoEntity {
                 this.setTarget(null);
                 return ActionResult.SUCCESS;
             } else {
-                setSit(!isSitting());
                 return ActionResult.SUCCESS;
             }
         }
@@ -180,34 +206,6 @@ public class LucyEntity extends TameableEntity implements GeoEntity {
     }
 
     @Override
-    protected void initGoals() {
-        this.goalSelector.add(0, new SitGoal(this));
-        this.goalSelector.add(1, new SwimGoal(this));
-        this.goalSelector.add(2, new TameableEscapeDangerGoal(1.5D, DamageTypeTags.PANIC_ENVIRONMENTAL_CAUSES));
-        this.goalSelector.add(3, new MeleeAttackGoal(this, 1.5, true));
-        this.goalSelector.add(4, new FollowOwnerGoal(this, 1.0, 10.0F, 2.0F));
-        this.goalSelector.add(5, new TemptGoal(this, 1.25D, Ingredient.ofItems(Items.ALLIUM), false));
-        this.goalSelector.add(6, new WanderAroundGoal(this, 1.0D));
-        this.goalSelector.add(7, new LookAtEntityGoal(this, PlayerEntity.class, 6.0F));
-        this.goalSelector.add(8, new LookAroundGoal(this));
-        this.targetSelector.add(1, new TrackOwnerAttackerGoal(this));
-        this.targetSelector.add(2, new AttackWithOwnerGoal(this));
-        this.targetSelector.add(2, new RevengeGoal(this));
-
-
-    }
-
-    public static DefaultAttributeContainer.Builder createAttributes() {
-        return MobEntity.createMobAttributes()
-                .add(EntityAttributes.GENERIC_MAX_HEALTH, MaxHealth)
-                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, .20)
-                .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 2);
-//                .add(EntityAttributes.GENERIC_ARMOR, armor);
-
-    }
-
-
-    @Override
     public boolean isBreedingItem(ItemStack stack) {
         return false;
     }
@@ -215,65 +213,6 @@ public class LucyEntity extends TameableEntity implements GeoEntity {
     @Override
     public @Nullable PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
         return null;
-    }
-
-    @Override
-    public void registerControllers(AnimatableManager.ControllerRegistrar controllerRegistrar) {
-        controllerRegistrar.add(new AnimationController<>(this, "controller", 0, this::predicate).transitionLength(3)); // sets the transition length to the next animation as 3 in game ticks
-    }
-
-    private <lucyentity extends GeoAnimatable> PlayState predicate(AnimationState<lucyentity> lucyEntityAnimationState) {
-        if (!this.isOnGround() &! isSittingdown()) {
-            lucyEntityAnimationState.getController().setAnimation(RawAnimation.begin().then("animation.lucy.fly", Animation.LoopType.LOOP));
-            toggleModelBones("steve", false);
-            return PlayState.CONTINUE;
-        }
-
-        if (lucyEntityAnimationState.isMoving() &! isSittingdown()) {
-            lucyEntityAnimationState.getController().setAnimation(RawAnimation.begin().then("animation.lucy.walk", Animation.LoopType.LOOP));
-            toggleModelBones("steve", false);
-            return PlayState.CONTINUE;
-        }
-
-        if (isSittingdown()) {
-            lucyEntityAnimationState.getController().setAnimation(RawAnimation.begin().then("animation.lucy.sit", Animation.LoopType.LOOP));
-            toggleModelBones("steve", false);
-            return PlayState.CONTINUE;
-        }
-
-
-        lucyEntityAnimationState.getController().setAnimation(RawAnimation.begin().then("animation.lucy.idle", Animation.LoopType.LOOP));
-        toggleModelBones("steve", false);
-        return PlayState.CONTINUE;
-    }
-
-    @Override
-    public AnimatableInstanceCache getAnimatableInstanceCache() {
-        return cache;
-    }
-
-    public void toggleModelBones(String bones, boolean visible) {
-        String[] boneArray = bones.replaceAll("\\s+", "").split(",");
-
-        if (this.hiddenBones == null) {
-            this.hiddenBones = new HashSet<>();
-        }
-        if (this.shownBones == null) {
-            this.shownBones = new HashSet<>();
-        }
-
-        List<String> boneList = Arrays.asList(boneArray);
-
-        if (visible) {
-            boneList.forEach(this.hiddenBones::remove);
-            this.shownBones.addAll(boneList);
-            this.showHiddenBones = true;
-        } else {
-            boneList.forEach(this.shownBones::remove);
-            this.hiddenBones.addAll(boneList);
-            this.showHiddenBones = false;
-        }
-
     }
 
     @Override
@@ -333,11 +272,13 @@ public class LucyEntity extends TameableEntity implements GeoEntity {
     }
 
     public void disown(PlayerEntity player) {
-        this.setTamed(false,true); // Mark the entity as untamed
-        this.setOwnerUuid(null); // Remove the owner UUID
-        this.setSit(false); // Ensure the entity is not sitting
-        if(!isTamed()){
-            player.sendMessage(Text.literal("§cYou Broke Up With " + entityName), true);
+        if(!player.getWorld().isClient){
+            this.setTamed(false,true); // Mark the entity as untamed
+            this.setOwnerUuid(null); // Remove the owner UUID
+            this.setSit(false); // Ensure the entity is not sitting
+            if(!isTamed() && !isOwner(player)){
+                player.sendMessage(Text.literal("§cYou Broke Up With " + entityName), true);
+            }
         }
     }
 
@@ -350,6 +291,29 @@ public class LucyEntity extends TameableEntity implements GeoEntity {
             setSit(true);
             this.teleport(this.basePos.getX(), this.basePos.getY(), this.basePos.getZ(), false);
         }
+    }
+
+    @Override
+    public void tickMovement() {
+        super.tickMovement();
+
+        if (attackTarget != null) {
+            ticksSinceLastHit++;
+
+            if (ticksSinceLastHit >= MAX_TICKS_NO_HIT) {
+                // Lost interest — stop attacking
+                this.setTarget(null);
+                attackTarget = null;
+                ticksSinceLastHit = 0;
+            }
+        }
+    }
+
+    public void tick() {
+        // Call this each tick in entity
+        super.tick();
+        previousYaw = getYaw();
+        previousVelocity = getVelocity();
     }
 
     @Override
@@ -377,27 +341,61 @@ public class LucyEntity extends TameableEntity implements GeoEntity {
     }
 
     @Override
-    public void tickMovement() {
-        super.tickMovement();
-
-        if (attackTarget != null) {
-            ticksSinceLastHit++;
-
-            if (ticksSinceLastHit >= MAX_TICKS_NO_HIT) {
-                // Lost interest — stop attacking
-                this.setTarget(null);
-                attackTarget = null;
-                ticksSinceLastHit = 0;
-            }
-        }
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
+        return cache;
     }
 
+    public void toggleModelBones(String bones, boolean visible) {
+        String[] boneArray = bones.replaceAll("\\s+", "").split(",");
 
-    public void tick() {
-        // Call this each tick in entity
-        super.tick();
-        previousYaw = getYaw();
-        previousVelocity = getVelocity();
+        if (this.hiddenBones == null) {
+            this.hiddenBones = new HashSet<>();
+        }
+        if (this.shownBones == null) {
+            this.shownBones = new HashSet<>();
+        }
+
+        List<String> boneList = Arrays.asList(boneArray);
+
+        if (visible) {
+            boneList.forEach(this.hiddenBones::remove);
+            this.shownBones.addAll(boneList);
+            this.showHiddenBones = true;
+        } else {
+            boneList.forEach(this.shownBones::remove);
+            this.hiddenBones.addAll(boneList);
+            this.showHiddenBones = false;
+        }
+
+    }
+
+    @Override
+    public NbtCompound writeNbt(NbtCompound nbt) {
+        super.writeNbt(nbt);
+
+        RegistryWrapper.WrapperLookup registryLookup = this.getWorld().getRegistryManager();
+        Inventories.writeNbt(nbt, this.inventory.getItems(), registryLookup);
+        nbt.putBoolean("Sitting", this.isSittingdown());
+        if (this.basePos != null) {
+            nbt.putInt("BaseX", this.basePos.getX());
+            nbt.putInt("BaseY", this.basePos.getY());
+            nbt.putInt("BaseZ", this.basePos.getZ());}
+        return nbt;
+    }
+
+    @Override
+    public void readNbt(NbtCompound nbt) {
+        super.readNbt(nbt);
+
+        RegistryWrapper.WrapperLookup registryLookup = this.getWorld().getRegistryManager();
+        Inventories.readNbt(nbt, this.inventory.getItems(), registryLookup);
+        this.setSit(nbt.getBoolean("Sitting"));
+        if (nbt.contains("BaseX") && nbt.contains("BaseY") && nbt.contains("BaseZ")) {
+            int x = nbt.getInt("BaseX");
+            int y = nbt.getInt("BaseY");
+            int z = nbt.getInt("BaseZ");
+            this.basePos = new BlockPos(x, y, z);}
+
     }
 
 }

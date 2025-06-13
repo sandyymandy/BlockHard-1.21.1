@@ -1,6 +1,7 @@
-package com.sandymandy.blockhard.entity.lucy;
+package com.sandymandy.blockhard.entity.lucy.screen;
 
 import com.sandymandy.blockhard.BlockHard;
+import com.sandymandy.blockhard.entity.lucy.LucyEntity;
 import com.sandymandy.blockhard.util.inventory.slot.PublicArmorSlot;
 import com.sandymandy.blockhard.util.inventory.GirlInventory;
 import net.minecraft.entity.Entity;
@@ -15,6 +16,7 @@ import net.minecraft.item.SwordItem;
 import net.minecraft.item.ToolItem;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.world.World;
 
@@ -56,6 +58,7 @@ public class LucyScreenHandler extends ScreenHandler {
         super(BlockHard.LUCY_SCREEN_HANDLER, syncId);
         PlayerEntity player = playerInventory.player;
         World world = player.getWorld();
+        player.sendMessage(Text.literal("Screen Handler: " + lucyId));
 
         Entity entity = world.getEntityById(lucyId);
         if (!(entity instanceof LucyEntity lucyEntity)) {

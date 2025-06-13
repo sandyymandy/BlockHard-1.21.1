@@ -3,5 +3,7 @@
 
   "entity.blockhard.lucy": "Lucy",
 
-  "itemgroup.blockhard.block_hard_items": "Block Hard Items"
+  "itemgroup.blockhard.block_hard_items": "Block Hard Items",
+
+  "screen.blockhard.lucy_inventory": "Lucy's Inventory"
 }
