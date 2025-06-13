@@ -1,7 +1,7 @@
 package com.sandymandy.blockhard.entity.lucy.screen;
 
-import com.sandymandy.blockhard.BlockHard;
 import com.sandymandy.blockhard.entity.lucy.LucyEntity;
+import com.sandymandy.blockhard.entity.lucy.LucyInit;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
@@ -20,7 +20,7 @@ public class LucyScreenHandlerFactory implements ExtendedScreenHandlerFactory {
     // Called on the server → sends data to client
     @Override
     public Object getScreenOpeningData(ServerPlayerEntity player) {
-        return new BlockHard.LucyScreenData(lucy.getId());
+        return new LucyInit.LucyScreenData(lucy.getId());
     }
 
     @Override

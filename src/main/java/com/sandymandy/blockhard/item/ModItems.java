@@ -1,6 +1,7 @@
 package com.sandymandy.blockhard.item;
 
 import com.sandymandy.blockhard.BlockHard;
+import com.sandymandy.blockhard.entity.lucy.LucyInit;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroups;
@@ -11,7 +12,7 @@ import net.minecraft.util.Identifier;
 
 public class ModItems {
     public static final Item LUCY_SPAWN_EGG = registerItem("lucy_spawn_egg",
-            new SpawnEggItem(BlockHard.LUCY, 0xf531d1, 0xa710c9, new Item.Settings()));
+            new SpawnEggItem(LucyInit.LUCY, 0xf531d1, 0xa710c9, new Item.Settings()));
 
     private static Item registerItem(String name, Item item){
         return Registry.register(Registries.ITEM, Identifier.of(BlockHard.MOD_ID, name), item);

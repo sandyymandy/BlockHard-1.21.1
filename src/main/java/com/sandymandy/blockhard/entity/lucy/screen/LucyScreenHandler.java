@@ -1,7 +1,7 @@
 package com.sandymandy.blockhard.entity.lucy.screen;
 
-import com.sandymandy.blockhard.BlockHard;
 import com.sandymandy.blockhard.entity.lucy.LucyEntity;
+import com.sandymandy.blockhard.entity.lucy.LucyInit;
 import com.sandymandy.blockhard.util.inventory.slot.PublicArmorSlot;
 import com.sandymandy.blockhard.util.inventory.GirlInventory;
 import net.minecraft.entity.Entity;
@@ -48,14 +48,14 @@ public class LucyScreenHandler extends ScreenHandler {
     */
 
     // The codec-compatible constructor
-    public LucyScreenHandler(int syncId, PlayerInventory playerInventory, BlockHard.LucyScreenData data) {
+    public LucyScreenHandler(int syncId, PlayerInventory playerInventory, LucyInit.LucyScreenData data) {
         this(syncId, playerInventory, data.entityId());
     }
 
     // This constructor gets called from the BlockEntity on the server without calling the other constructor first, the server knows the inventory of the container
     // and can therefore directly provide it as an argument. This inventory will then be synced to the client.
     public LucyScreenHandler(int syncId, PlayerInventory playerInventory, int lucyId) {
-        super(BlockHard.LUCY_SCREEN_HANDLER, syncId);
+        super(LucyInit.LUCY_SCREEN_HANDLER, syncId);
         PlayerEntity player = playerInventory.player;
         World world = player.getWorld();
         player.sendMessage(Text.literal("Screen Handler: " + lucyId));

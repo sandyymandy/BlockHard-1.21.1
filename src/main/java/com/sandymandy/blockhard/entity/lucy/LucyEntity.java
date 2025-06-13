@@ -161,8 +161,6 @@ public class LucyEntity extends TameableEntity implements GeoEntity {
                 this.setVelocity(0, 0, 0);
                 this.setTarget(null);
                 return ActionResult.SUCCESS;
-            } else {
-                return ActionResult.SUCCESS;
             }
         }
 
