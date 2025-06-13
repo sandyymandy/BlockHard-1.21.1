@@ -1,7 +1,7 @@
 package com.sandymandy.blockhard.entity.lucy.screen;
 
-import com.sandymandy.blockhard.BlockHard;
-import com.sandymandy.blockhard.entity.lucy.LucyEntity;
+import com.sandymandy.blockhard.entity.AbstractGirlEntity;
+import com.sandymandy.blockhard.entity.lucy.LucyInit;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
@@ -11,16 +11,16 @@ import net.minecraft.text.Text;
 import org.jetbrains.annotations.Nullable;
 
 public class LucyScreenHandlerFactory implements ExtendedScreenHandlerFactory {
-    private final LucyEntity lucy;
+    private final AbstractGirlEntity girl;
 
-    public LucyScreenHandlerFactory(LucyEntity lucy) {
-        this.lucy = lucy;
+    public LucyScreenHandlerFactory(AbstractGirlEntity girlEntity) {
+        this.girl = girlEntity;
     }
 
     // Called on the server → sends data to client
     @Override
     public Object getScreenOpeningData(ServerPlayerEntity player) {
-        return new BlockHard.LucyScreenData(lucy.getId());
+        return new LucyInit.LucyScreenData(girl.getId());
     }
 
     @Override
@@ -31,6 +31,6 @@ public class LucyScreenHandlerFactory implements ExtendedScreenHandlerFactory {
     // Called on the client
     @Override
     public @Nullable ScreenHandler createMenu(int syncId, PlayerInventory playerInventory, PlayerEntity player) {
-        return new LucyScreenHandler(syncId, playerInventory, lucy.getId());
+        return new LucyScreenHandler(syncId, playerInventory, girl.getId());
     }
 }

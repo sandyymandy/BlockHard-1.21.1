@@ -10,16 +10,21 @@ import java.util.List;
 
 public class LucyButtonRegistry {
     public static final List<LucyButtonAction> BUTTONS = List.of(
-            new LucyButtonAction(Text.literal("Sit"), (lucy, player) -> {
-                ClientPlayNetworking.send(new LucyButtonPacket(lucy.getId(), "sit"));
-            }),
 
             new LucyButtonAction(Text.literal("Break Up"), (lucy, player) -> {
                 ClientPlayNetworking.send(new LucyButtonPacket(lucy.getId(), "breakUp"));
             }),
 
-            new LucyButtonAction(Text.literal("Say Hi"), (lucy, player) -> {
-                player.sendMessage(Text.literal("Lucy waves at you!"), true);
+            new LucyButtonAction(Text.literal("Set Base Here"), (lucy, player) -> {
+                ClientPlayNetworking.send(new LucyButtonPacket(lucy.getId(), "setBase"));
+            }),
+
+            new LucyButtonAction(Text.literal("Start Scene"), (lucy, player) -> {
+                ClientPlayNetworking.send(new LucyButtonPacket(lucy.getId(), "startScene"));
+            }),
+
+            new LucyButtonAction(Text.literal("Go to Base"), (lucy, player) -> {
+                ClientPlayNetworking.send(new LucyButtonPacket(lucy.getId(), "goToBase"));
             })
     );
 }

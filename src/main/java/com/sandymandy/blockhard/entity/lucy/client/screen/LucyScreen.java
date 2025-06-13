@@ -76,13 +76,22 @@ public class LucyScreen extends HandledScreen<LucyScreenHandler> {
                     action.label(),
                     btn -> {
                         if (lucy != null && client != null && player != null) {
-                            action.action().accept(lucy, client.player);  // Run the button's logic
+                            action.action().accept(lucy, player);  // Run the button's logic
                             this.client.setScreen(null);
-                            player.sendMessage(Text.literal("Screen: " + lucy.getId()));
                         }
                     }
             ).dimensions(startX, y, buttonWidth, buttonHeight).build());
         }
+
+        this.addDrawableChild(ButtonWidget.builder(Text.literal("Talk"),
+                btn -> {
+                    if (lucy != null && client != null && player != null) {
+
+                        this.client.setScreen(null);
+                    }
+                }
+        ).dimensions(centerX + 185, startY + 60, buttonWidth, buttonHeight).build());
+
 
     }
 
