@@ -18,19 +18,7 @@ public class LucyRenderer extends DynamicGeoEntityRenderer<LucyEntity> {
     public Identifier getTextureLocation(LucyEntity animatable){
         return Identifier.of(BlockHard.MOD_ID, "textures/entities/lucy.png");
     }
-/*
-    @Override
-    protected Identifier getTextureOverrideForBone(GeoBone bone, LucyEntity animatable, float partialTick) {
-        if (bone == null || animatable == null) return null;
 
-        String name = bone.getName();
-        if ("Torso2".equals(name) || "RightLeg".equals(name) || "RightArm".equals(name) || "LeftArm".equals(name) || "kneeR2".equals(name) || "shinR2".equals(name) || "bone13".equals(name) || "kneeR3".equals(name) || "shinL2".equals(name) || "bone14".equals(name) || "ballR".equals(name) || "ballL".equals(name) || "cock".equals(name) || "Head2".equals(name) || "bone148".equals(name) || "bone149".equals(name) || "bone150".equals(name) || "bone151".equals(name) || "shaft".equals(name) || "lSide5".equals(name) || "lSide6".equals(name) || "bottom2".equals(name) || "backSide2".equals(name)) {
-
-            return Identifier.of(BlockHard.MOD_ID, "textures/player/steve.png");
-        }
-
-        return null;
-    }*/
 
     @Override
     public void render(LucyEntity entity, float entityYaw, float partialTick, MatrixStack poseStack,

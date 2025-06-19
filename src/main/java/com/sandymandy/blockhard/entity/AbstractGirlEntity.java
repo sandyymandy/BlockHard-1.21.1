@@ -32,9 +32,11 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
+import software.bernie.geckolib.animatable.GeoAnimatable;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animatable.instance.SingletonAnimatableInstanceCache;
+import software.bernie.geckolib.animation.*;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -96,7 +98,8 @@ public abstract class AbstractGirlEntity extends TameableEntity implements GeoEn
         this.goalSelector.add(8, new LookAroundGoal(this));
         this.targetSelector.add(1, new TrackOwnerAttackerGoal(this));
         this.targetSelector.add(2, new AttackWithOwnerGoal(this));
-        this.targetSelector.add(2, new RevengeGoal(this));
+        this.targetSelector.add(3, new RevengeGoal(this, PlayerEntity.class));
+
 
 
     }
@@ -383,6 +386,37 @@ public abstract class AbstractGirlEntity extends TameableEntity implements GeoEn
     public void updateMountedOffset(PlayerEntity player) {
 
     }
+
+    @Override
+    public void registerControllers(AnimatableManager.ControllerRegistrar controllerRegistrar) {
+        controllerRegistrar.add(new AnimationController<>(this, "controller", 3, this::predicate)); // sets the transition length to the next animation as 3 in game ticks
+    }
+
+    private <girlEntity extends GeoAnimatable> PlayState predicate(AnimationState<girlEntity> girlEntityAnimationState) {
+        if (!this.isOnGround() &! isSittingdown()) {
+            girlEntityAnimationState.getController().setAnimation(RawAnimation.begin().then("animation."+ getGirlName().toLowerCase() +".fly", Animation.LoopType.LOOP));
+            toggleModelBones("steve", false);
+            return PlayState.CONTINUE;
+        }
+
+        if (girlEntityAnimationState.isMoving() &! isSittingdown()) {
+            girlEntityAnimationState.getController().setAnimation(RawAnimation.begin().then("animation."+ getGirlName().toLowerCase() +".walk", Animation.LoopType.LOOP));
+            toggleModelBones("steve", false);
+            return PlayState.CONTINUE;
+        }
+
+        if (isSittingdown()) {
+            girlEntityAnimationState.getController().setAnimation(RawAnimation.begin().then("animation."+ getGirlName().toLowerCase() +".sit", Animation.LoopType.LOOP));
+            toggleModelBones("steve", false);
+            return PlayState.CONTINUE;
+        }
+
+
+        girlEntityAnimationState.getController().setAnimation(RawAnimation.begin().then("animation."+ getGirlName().toLowerCase() +".idle", Animation.LoopType.LOOP));
+        toggleModelBones("steve", false);
+        return PlayState.CONTINUE;
+    }
+
 
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {

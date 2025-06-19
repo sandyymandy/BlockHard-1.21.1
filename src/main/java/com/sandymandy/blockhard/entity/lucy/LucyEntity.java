@@ -10,11 +10,6 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
 import net.minecraft.world.World;
-import software.bernie.geckolib.animatable.GeoAnimatable;
-import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animatable.instance.SingletonAnimatableInstanceCache;
-import software.bernie.geckolib.animation.AnimationController;
-import software.bernie.geckolib.animation.*;
 
 public class LucyEntity extends AbstractGirlEntity{
 
@@ -47,34 +42,5 @@ public class LucyEntity extends AbstractGirlEntity{
     }
 
 
-    @Override
-    public void registerControllers(AnimatableManager.ControllerRegistrar controllerRegistrar) {
-        controllerRegistrar.add(new AnimationController<>(this, "controller", 0, this::predicate).transitionLength(3)); // sets the transition length to the next animation as 3 in game ticks
-    }
-
-    private <lucyentity extends GeoAnimatable> PlayState predicate(AnimationState<lucyentity> lucyEntityAnimationState) {
-        if (!this.isOnGround() &! isSittingdown()) {
-            lucyEntityAnimationState.getController().setAnimation(RawAnimation.begin().then("animation.lucy.fly", Animation.LoopType.LOOP));
-            toggleModelBones("steve", false);
-            return PlayState.CONTINUE;
-        }
-
-        if (lucyEntityAnimationState.isMoving() &! isSittingdown()) {
-            lucyEntityAnimationState.getController().setAnimation(RawAnimation.begin().then("animation.lucy.walk", Animation.LoopType.LOOP));
-            toggleModelBones("steve", false);
-            return PlayState.CONTINUE;
-        }
-
-        if (isSittingdown()) {
-            lucyEntityAnimationState.getController().setAnimation(RawAnimation.begin().then("animation.lucy.sit", Animation.LoopType.LOOP));
-            toggleModelBones("steve", false);
-            return PlayState.CONTINUE;
-        }
-
-
-        lucyEntityAnimationState.getController().setAnimation(RawAnimation.begin().then("animation.lucy.idle", Animation.LoopType.LOOP));
-        toggleModelBones("steve", false);
-        return PlayState.CONTINUE;
-    }
 
 }
