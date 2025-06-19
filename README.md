@@ -1,6 +1,6 @@
 # BlockHard
 
-BlockHard is an adult-themed mod for Minecraft 1.21.1 and above made using the Fabric. It’s a full remake and modern reimagining of the old 1.12.2 Sex mod (now known as Fapcraft) original made by Schnurri_tv, rebuilt from scratch to work with fabric and current versions of Minecraft.
+BlockHard is an adult-themed mod for Minecraft 1.21.1 and above made using the Fabric. It’s a full remake and modern reimagining of the old 1.12.2 FapCraft mod made by Schnurri_tv, rebuilt from scratch to work with fabric and current versions of Minecraft.
 
 ## Current Features
 

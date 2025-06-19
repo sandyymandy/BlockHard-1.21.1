@@ -57,20 +57,18 @@ public abstract class AbstractGirlEntity extends TameableEntity implements GeoEn
     public float previousYaw = 0;
     public Vec3d previousVelocity = Vec3d.ZERO;
     protected Item getTameItem() {
-        return Items.ALLIUM;
+        return Items.DANDELION;
     }
 
     protected String getGirlName() {
         return "Null";
     }
 
-    protected int MaxHealth() {
-        return 20;
-    }
-
-
     protected AbstractGirlEntity(EntityType<? extends TameableEntity> entityType, World world) {
         super(entityType, world);
+    }
+
+    protected void openThisHandledScreen(PlayerEntity player){
     }
 
     @Override
@@ -124,7 +122,7 @@ public abstract class AbstractGirlEntity extends TameableEntity implements GeoEn
 
         if (!this.getWorld().isClient && isOwner(player) && this.isTamed() && hand.equals(Hand.MAIN_HAND)) {
             if (!player.isSneaking()) {
-                player.openHandledScreen(new LucyScreenHandlerFactory(this));
+                openThisHandledScreen(player);
                 this.getNavigation().stop();
                 this.setVelocity(0, 0, 0);
                 this.setTarget(null);
@@ -213,7 +211,7 @@ public abstract class AbstractGirlEntity extends TameableEntity implements GeoEn
         }
 
         if(this.isTamed() && (this.getHealth() - amount <= 0.0F) &! (damageType.equals("outOfWorld") || damageType.equals("genericKill"))) {
-            this.setHealth(MaxHealth());
+            this.setHealth(getMaxHealth());
             // If basePos is still null, fall back to current position
             BlockPos respawnPos = (this.basePos != null)
                     ? this.basePos
@@ -343,7 +341,7 @@ public abstract class AbstractGirlEntity extends TameableEntity implements GeoEn
 
     @Override
     public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeNbt(nbt);
+        super.writeCustomDataToNbt(nbt);
 
         RegistryWrapper.WrapperLookup registryLookup = this.getWorld().getRegistryManager();
         Inventories.writeNbt(nbt, this.inventory.getItems(), registryLookup);
@@ -356,7 +354,7 @@ public abstract class AbstractGirlEntity extends TameableEntity implements GeoEn
 
     @Override
     public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readNbt(nbt);
+        super.readCustomDataFromNbt(nbt);
 
         RegistryWrapper.WrapperLookup registryLookup = this.getWorld().getRegistryManager();
         Inventories.readNbt(nbt, this.inventory.getItems(), registryLookup);

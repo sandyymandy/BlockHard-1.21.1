@@ -1,6 +1,7 @@
 package com.sandymandy.blockhard.entity.lucy;
 
 import com.sandymandy.blockhard.entity.AbstractGirlEntity;
+import com.sandymandy.blockhard.entity.lucy.screen.LucyScreenHandlerFactory;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.attribute.DefaultAttributeContainer;
 import net.minecraft.entity.attribute.EntityAttributes;
@@ -29,6 +30,11 @@ public class LucyEntity extends AbstractGirlEntity{
     @Override
     protected String getGirlName() {
         return "Lucy";
+    }
+
+    @Override
+    protected void openThisHandledScreen(PlayerEntity player){
+        player.openHandledScreen(new LucyScreenHandlerFactory(this));
     }
 
     public static DefaultAttributeContainer.Builder createAttributes() {
