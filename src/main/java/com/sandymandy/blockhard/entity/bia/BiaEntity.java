@@ -11,7 +11,7 @@ import net.minecraft.world.World;
 
 public class BiaEntity extends AbstractGirlEntity{
 
-    protected BiaEntity(EntityType<? extends AbstractGirlEntity> entityType, World world) {
+    public BiaEntity(EntityType<? extends AbstractGirlEntity> entityType, World world) {
         super(entityType, world);
     }
 
@@ -41,7 +41,6 @@ public class BiaEntity extends AbstractGirlEntity{
                 .add(EntityAttributes.GENERIC_MAX_HEALTH, 20)
                 .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, .20)
                 .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 2);
-//                .add(EntityAttributes.GENERIC_ARMOR, armor);
 
     }
 

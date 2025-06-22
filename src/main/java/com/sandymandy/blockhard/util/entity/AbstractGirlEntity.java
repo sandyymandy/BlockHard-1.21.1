@@ -1,9 +1,10 @@
 package com.sandymandy.blockhard.util.entity;
 
-//import com.sandymandy.blockhard.entity.cat.screen.CatScreenHandlerFactory;
 import com.sandymandy.blockhard.scene.SceneEntity;
 import com.sandymandy.blockhard.screen.GirlScreenHandlerFactory;
 import com.sandymandy.blockhard.util.GlobleMessages;
+import com.sandymandy.blockhard.util.entity.ai.ConditionalGoal;
+import com.sandymandy.blockhard.util.entity.ai.StopMovementGoal;
 import com.sandymandy.blockhard.util.inventory.GirlInventory;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityStatuses;
@@ -51,6 +52,7 @@ public abstract class AbstractGirlEntity extends TameableEntity implements GeoEn
     public int currentRelationshipLevel;
     private static final TrackedData<Boolean> SITTING = DataTracker.registerData(AbstractGirlEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private static final TrackedData<Boolean> STRIPPED = DataTracker.registerData(AbstractGirlEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+    private static final TrackedData<Boolean> FOLLOWING = DataTracker.registerData(AbstractGirlEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private final GirlInventory inventory = GirlInventory.ofSize();
     private BlockPos basePos;
     private LivingEntity attackTarget;
@@ -58,6 +60,7 @@ public abstract class AbstractGirlEntity extends TameableEntity implements GeoEn
     private static final int MAX_TICKS_NO_HIT = 20 * 20;
     public float previousYaw = 0;
     public Vec3d previousVelocity = Vec3d.ZERO;
+    private boolean movementLocked = false;
     protected Item getTameItem() {
         return Items.DANDELION;
     }
@@ -88,6 +91,7 @@ public abstract class AbstractGirlEntity extends TameableEntity implements GeoEn
         super.initDataTracker(builder);
         builder.add(SITTING, false);
         builder.add(STRIPPED, false);
+        builder.add(FOLLOWING, false);
     }
 
 
@@ -97,21 +101,19 @@ public abstract class AbstractGirlEntity extends TameableEntity implements GeoEn
 
     @Override
     protected void initGoals() {
+        this.goalSelector.add(-1, new ConditionalGoal(new StopMovementGoal(this), () -> isMovementLocked()));
         this.goalSelector.add(0, new SitGoal(this));
         this.goalSelector.add(1, new SwimGoal(this));
         this.goalSelector.add(2, new TameableEscapeDangerGoal(1.5D, DamageTypeTags.PANIC_ENVIRONMENTAL_CAUSES));
         this.goalSelector.add(3, new MeleeAttackGoal(this, 1.5, true));
-        this.goalSelector.add(4, new FollowOwnerGoal(this, 1.0, 10.0F, 2.0F));
+        this.goalSelector.add(4, new ConditionalGoal(new FollowOwnerGoal(this, 1.0, 10.0F, 2.0F), () -> isFollowing()));
         this.goalSelector.add(5, new TemptGoal(this, 1.25D, Ingredient.ofItems(getTameItem()), false));
         this.goalSelector.add(6, new WanderAroundGoal(this, 1.0D));
-        this.goalSelector.add(7, new LookAtEntityGoal(this, PlayerEntity.class, 6.0F));
-        this.goalSelector.add(8, new LookAroundGoal(this));
+        this.goalSelector.add(7, new ConditionalGoal(new LookAtEntityGoal(this, PlayerEntity.class, 6.0F),() -> !isMovementLocked()));
+        this.goalSelector.add(8, new ConditionalGoal(new LookAroundGoal(this),() -> !isMovementLocked()));
         this.targetSelector.add(1, new TrackOwnerAttackerGoal(this));
         this.targetSelector.add(2, new AttackWithOwnerGoal(this));
         this.targetSelector.add(3, new RevengeGoal(this, PlayerEntity.class));
-
-
-
     }
 
 
@@ -140,7 +142,7 @@ public abstract class AbstractGirlEntity extends TameableEntity implements GeoEn
                 this.setVelocity(0, 0, 0);
                 this.setTarget(null);
                 return ActionResult.SUCCESS;
-            }else{
+            }else if(!isMovementLocked()){
                 this.setSit(!isSittingdown());
                 return ActionResult.SUCCESS;
             }
@@ -182,8 +184,32 @@ public abstract class AbstractGirlEntity extends TameableEntity implements GeoEn
 
     public boolean isSittingdown() {
         return this.dataTracker.get(SITTING);
-
     }
+
+    public void setFollowing(boolean follow) {
+        this.dataTracker.set(FOLLOWING, follow);
+    }
+
+    public boolean isFollowing() {
+        return this.dataTracker.get(FOLLOWING);
+    }
+
+    public void setStripped(boolean stripped) {
+        this.dataTracker.set(STRIPPED, stripped);
+    }
+
+    public boolean isStripped() {
+        return dataTracker.get(STRIPPED);
+    }
+
+    public void setMovementLocked(boolean locked) {
+        this.movementLocked = locked;
+    }
+
+    public boolean isMovementLocked() {
+        return this.movementLocked;
+    }
+
 
     @Override
     public boolean isBreedingItem(ItemStack stack) {
@@ -223,7 +249,7 @@ public abstract class AbstractGirlEntity extends TameableEntity implements GeoEn
             return super.damage(source, amount);
         }
 
-        if(this.isTamed() && (this.getHealth() - amount <= 0.0F) &! (damageType.equals("outOfWorld") || damageType.equals("genericKill"))) {
+        if(this.isTamed() && (this.getHealth() - amount <= 0.0F) &! (damageType.equals("outOfWorld") || damageType.equals("genericKill") || isMovementLocked())) {
             this.setHealth(getMaxHealth());
             // If basePos is still null, fall back to current position
             BlockPos respawnPos = (this.basePos != null)
@@ -246,7 +272,13 @@ public abstract class AbstractGirlEntity extends TameableEntity implements GeoEn
             teleportToBase();
 
             return false;
-        }else{
+        }
+        else if(isMovementLocked() &! damageType.equals("outOfWorld") || damageType.equals("genericKill")){
+            new GlobleMessages().GlobleMessage(
+                    this.getWorld(),getGirlDisplayName() + " is busy at the moment");
+            return false;
+        }
+        else{
             return super.damage(source, amount);
         }
     }
@@ -417,8 +449,8 @@ public abstract class AbstractGirlEntity extends TameableEntity implements GeoEn
         toggleModelBones("steve", false);
         return PlayState.CONTINUE;
     }
-
     public String overrideAnimation = null;
+
     public boolean overrideLoop = false; // Used for forced one-shot animations (e.g., strip)
 
 
@@ -432,15 +464,6 @@ public abstract class AbstractGirlEntity extends TameableEntity implements GeoEn
     }
 
 
-
-    public boolean isStripped() {
-        return dataTracker.get(STRIPPED);
-
-    }
-
-    public void setStripped(boolean stripped) {
-        dataTracker.set(STRIPPED, stripped);
-    }
 
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
@@ -475,5 +498,32 @@ public abstract class AbstractGirlEntity extends TameableEntity implements GeoEn
             int z = nbt.getInt("BaseZ");
             this.basePos = new BlockPos(x, y, z);}
 
+    }
+
+    @Override
+    public void pushAwayFrom(Entity entity) {
+        if (!movementLocked) {
+            super.pushAwayFrom(entity);
+        }
+    }
+
+    @Override
+    public void takeKnockback(double strength, double x, double z) {
+        if (!this.movementLocked) {
+            super.takeKnockback(strength, x, z);
+        }
+    }
+
+    @Override
+    public boolean isPushable() {
+        return !movementLocked;
+    }
+
+
+    @Override
+    public void addVelocity(double dx, double dy, double dz) {
+        if (!movementLocked) {
+            super.addVelocity(dx, dy, dz);
+        }
     }
 }

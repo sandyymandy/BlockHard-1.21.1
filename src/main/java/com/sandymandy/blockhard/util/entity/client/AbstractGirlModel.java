@@ -12,6 +12,7 @@ import software.bernie.geckolib.constant.DataTickets;
 import software.bernie.geckolib.model.GeoModel;
 import software.bernie.geckolib.model.data.EntityModelData;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,24 +21,16 @@ public abstract class AbstractGirlModel<T extends AbstractGirlEntity> extends Ge
     private final Map<Long, Map<String, JigglePhysics>> jiggleMapByEntity = new HashMap<>();
     private final Map<Long, Map<String, Vec3d>> defaultRotationsByEntity = new HashMap<>();
 
+    @Override
+    public abstract Identifier getModelResource(T animatable);
 
+    @Override
+    public abstract Identifier getTextureResource(T animatable);
 
+    @Override
+    public abstract Identifier getAnimationResource(T animatable);
 
-        public AbstractGirlModel() {}
-
-        @Override
-        public abstract Identifier getModelResource(T animatable);
-
-        @Override
-        public abstract Identifier getTextureResource(T animatable);
-
-        @Override
-        public abstract Identifier getAnimationResource(T animatable);
-
-
-        private void applyJiggle(String boneKey, GeoBone bone, Vec3d motion,
-                             Map<String, JigglePhysics> jMap,
-                             Map<String, Vec3d> dMap) {
+    private void applyJiggle(String boneKey, GeoBone bone, Vec3d motion, Map<String, JigglePhysics> jMap, Map<String, Vec3d> dMap) {
         JigglePhysics jiggle = jMap.get(boneKey);
         Vec3d defaultRot = dMap.get(boneKey);
         if (jiggle == null || defaultRot == null) return;
@@ -50,12 +43,18 @@ public abstract class AbstractGirlModel<T extends AbstractGirlEntity> extends Ge
         bone.setRotZ((float) (defaultRot.z + offset.z));
     }
 
-    private static final List<JiggleBoneConfig> JIGGLE_BONES = List.of(
-            new JiggleBoneConfig("boobL", 0.2, 0.3),
-            new JiggleBoneConfig("boobR", 0.2, 0.3),
-            new JiggleBoneConfig("cheekL", 0.2, 0.1),
-            new JiggleBoneConfig("cheekR", 0.2, 0.1)
-    );
+    protected List<JiggleBoneConfig> JIGGLE_BONES(T entity){
+        List<JiggleBoneConfig> bones = new ArrayList<>();
+
+        bones.add(new JiggleBoneConfig("cheekL", 0.2, 0.1));
+        bones.add(new JiggleBoneConfig("cheekR", 0.2, 0.1));
+
+        if(!entity.isStripped()){
+            bones.add(new JiggleBoneConfig("boobs", 0.2, 0.3));
+        }
+
+        return bones;
+    }
 
 
     @Override
@@ -83,7 +82,7 @@ public abstract class AbstractGirlModel<T extends AbstractGirlEntity> extends Ge
         Map<String, Vec3d> defaultRotations = defaultRotationsByEntity.get(instanceId);
 
         // Iterate bones
-        for (JiggleBoneConfig config : JIGGLE_BONES) {
+        for (JiggleBoneConfig config : JIGGLE_BONES(girl)) {
             GeoBone bone = getAnimationProcessor().getBone(config.boneName());
             if (bone == null) continue;
 

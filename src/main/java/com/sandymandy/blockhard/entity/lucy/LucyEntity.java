@@ -11,7 +11,7 @@ import net.minecraft.world.World;
 
 public class LucyEntity extends AbstractGirlEntity{
 
-    protected LucyEntity(EntityType<? extends AbstractGirlEntity> entityType, World world) {
+    public LucyEntity(EntityType<? extends AbstractGirlEntity> entityType, World world) {
         super(entityType, world);
     }
 
@@ -36,7 +36,6 @@ public class LucyEntity extends AbstractGirlEntity{
                 .add(EntityAttributes.GENERIC_MAX_HEALTH, 20)
                 .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, .20)
                 .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 2);
-//                .add(EntityAttributes.GENERIC_ARMOR, armor);
 
     }
 

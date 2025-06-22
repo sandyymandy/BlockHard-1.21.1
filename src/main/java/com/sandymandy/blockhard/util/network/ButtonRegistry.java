@@ -6,7 +6,7 @@ import net.minecraft.text.Text;
 import java.util.List;
 
 public class ButtonRegistry {
-    public static final List<ButtonAction> BUTTONS = List.of(
+    public static final List<ButtonAction> BUTTONS_LEFT = List.of(
             new ButtonAction(Text.literal("Strip"), (girl, player) -> {
                 ClientPlayNetworking.send(new ButtonPacket(girl.getId(), "stripOrDressup"));
             }),
@@ -21,10 +21,24 @@ public class ButtonRegistry {
 
             new ButtonAction(Text.literal("Go To Base"), (girl, player) -> {
                 ClientPlayNetworking.send(new ButtonPacket(girl.getId(), "goToBase"));
+            })
+    );
+
+    public static final List<ButtonAction> BUTTONS_RIGHT = List.of(
+            new ButtonAction(Text.literal("Talk"), (girl, player) -> {
+                ClientPlayNetworking.send(new ButtonPacket(girl.getId(), "talk"));
             }),
 
-            new ButtonAction(Text.literal("Say Hi"), (girl, player) -> {
-                ClientPlayNetworking.send(new ButtonPacket(girl.getId(), "startScene"));
+            new ButtonAction(Text.literal("Sit"), (girl, player) -> {
+                ClientPlayNetworking.send(new ButtonPacket(girl.getId(), "sit"));
+            }),
+
+            new ButtonAction(Text.literal("Follow Me"), (girl, player) -> {
+                ClientPlayNetworking.send(new ButtonPacket(girl.getId(), "follow"));
+            }),
+
+            new ButtonAction(Text.literal("Stop Moving"), (girl, player) -> {
+                ClientPlayNetworking.send(new ButtonPacket(girl.getId(), "stop"));
             })
     );
 }

@@ -21,14 +21,14 @@ public class GirlScreen extends HandledScreen<GirlScreenHandler> {
     private float yMouse;
     private static final int GUI_WIDTH = 176;
     private static final int GUI_HEIGHT = 170;
-    private final AbstractGirlEntity cat;
+    private final AbstractGirlEntity girl;
     private final PlayerEntity player;
 
 
 
     public GirlScreen(GirlScreenHandler handler, PlayerInventory inventory, Text title) {
         super(handler, inventory, title);
-        this.cat = handler.getGirl();
+        this.girl = handler.getGirl();
         this.player = inventory.player;
     }
 
@@ -64,39 +64,54 @@ public class GirlScreen extends HandledScreen<GirlScreenHandler> {
         int centerX = (this.width - GUI_WIDTH) / 2;
         int centerY = (this.height - GUI_HEIGHT) / 2;
 
-        int startX = centerX - 90;
-        int startY = centerY + 15;
         int buttonHeight = 22;
         int buttonWidth = 80;
 
-        for (int i = 0; i < ButtonRegistry.BUTTONS.size(); i++) {
-            ButtonAction action = ButtonRegistry.BUTTONS.get(i);
+        int startX = centerX - (buttonWidth + 10);
+        int startY = centerY + 15;
+
+        for (int i = 0; i < ButtonRegistry.BUTTONS_LEFT.size(); i++) {
+            ButtonAction action = ButtonRegistry.BUTTONS_LEFT.get(i);
             int y = startY + i * (buttonHeight + 4);
             Text dynamicLabel = action.label();
-            if (action.label().getString().equals("Strip") && cat.isStripped()) {
+
+            if (action.label().getString().equals("Strip") && girl.isStripped()) {
                 dynamicLabel = Text.literal("Dress Up");
             }
 
             this.addDrawableChild(ButtonWidget.builder(
                     dynamicLabel,
                     btn -> {
-                        if (cat != null && client != null && player != null) {
-                            action.action().accept(cat, player);  // Run the button's logic
+                        if (girl != null && client != null && player != null) {
+                            action.action().accept(girl, player);  // Run the button's logic
                             this.client.setScreen(null);
                         }
                     }
             ).dimensions(startX, y, buttonWidth, buttonHeight).build());
         }
 
-        this.addDrawableChild(ButtonWidget.builder(Text.literal("Talk"),
-                btn -> {
-                    if (cat != null && client != null && player != null) {
+        for (int i = 0; i < ButtonRegistry.BUTTONS_RIGHT.size(); i++) {
+            ButtonAction action = ButtonRegistry.BUTTONS_RIGHT.get(i);
+            int y = startY + i * (buttonHeight + 4);
+            Text dynamicLabel = action.label();
 
-                        this.client.setScreen(null);
+            if (action.label().getString().equals("Sit") && girl.isSittingdown()){
+                dynamicLabel = Text.literal("Stand");
+            }
+            else if (action.label().getString().equals("Follow Me") && girl.isFollowing()){
+                dynamicLabel = Text.literal("Stop Following");
+            }
+
+            this.addDrawableChild(ButtonWidget.builder(
+                    dynamicLabel,
+                    btn -> {
+                        if (girl != null && client != null && player != null) {
+                            action.action().accept(girl, player);  // Run the button's logic
+                            this.client.setScreen(null);
+                        }
                     }
-                }
-        ).dimensions(centerX + 185, startY + 60, buttonWidth, buttonHeight).build());
-
+            ).dimensions(centerX + 176 + 10, y, buttonWidth, buttonHeight).build());
+        }
 
     }
 
