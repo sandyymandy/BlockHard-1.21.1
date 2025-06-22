@@ -1,4 +1,4 @@
-package com.sandymandy.blockhard.util;
+package com.sandymandy.blockhard.util.jigglePhysics;
 
 import net.minecraft.util.math.Vec3d;
 

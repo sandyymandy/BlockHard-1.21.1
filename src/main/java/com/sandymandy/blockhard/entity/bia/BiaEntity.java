@@ -1,4 +1,4 @@
-package com.sandymandy.blockhard.entity.lucy;
+package com.sandymandy.blockhard.entity.bia;
 
 import com.sandymandy.blockhard.util.entity.AbstractGirlEntity;
 import net.minecraft.entity.EntityType;
@@ -9,25 +9,30 @@ import net.minecraft.item.Item;
 import net.minecraft.item.Items;
 import net.minecraft.world.World;
 
-public class LucyEntity extends AbstractGirlEntity{
+public class BiaEntity extends AbstractGirlEntity{
 
-    protected LucyEntity(EntityType<? extends AbstractGirlEntity> entityType, World world) {
+    protected BiaEntity(EntityType<? extends AbstractGirlEntity> entityType, World world) {
         super(entityType, world);
     }
 
     @Override
     protected Item getTameItem() {
-        return Items.ALLIUM;
+        return Items.ORANGE_TULIP;
     }
 
     @Override
     protected String getGirlDisplayName() {
-        return "Lucy";
+        return "Bia";
     }
 
     @Override
     protected String getGirlID() {
-        return "lucy";
+        return "bia";
+    }
+
+    @Override
+    protected String getClothingBones() {
+        return "slip";
     }
 
 

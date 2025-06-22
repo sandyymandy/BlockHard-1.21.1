@@ -1,7 +1,7 @@
-package com.sandymandy.blockhard.entity.lucy.screen;
+package com.sandymandy.blockhard.screen;
 
-import com.sandymandy.blockhard.entity.lucy.LucyEntity;
-import com.sandymandy.blockhard.entity.lucy.LucyInit;
+import com.sandymandy.blockhard.BlockHard;
+import com.sandymandy.blockhard.util.entity.AbstractGirlEntity;
 import com.sandymandy.blockhard.util.inventory.slot.PublicArmorSlot;
 import com.sandymandy.blockhard.util.inventory.GirlInventory;
 import net.minecraft.entity.Entity;
@@ -16,58 +16,39 @@ import net.minecraft.item.SwordItem;
 import net.minecraft.item.ToolItem;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
-import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.world.World;
 
-public class LucyScreenHandler extends ScreenHandler {
+public class GirlScreenHandler extends ScreenHandler {
     private final Inventory inventory;
-    private final LucyEntity lucy;
+    private final AbstractGirlEntity girl;
     public static final Identifier EMPTY_HELMET_SLOT_TEXTURE = Identifier.ofVanilla( "item/empty_armor_slot_helmet");
     public static final Identifier EMPTY_CHESTPLATE_SLOT_TEXTURE = Identifier.ofVanilla( "item/empty_armor_slot_chestplate");
     public static final Identifier EMPTY_LEGGINGS_SLOT_TEXTURE = Identifier.ofVanilla( "item/empty_armor_slot_leggings");
     public static final Identifier EMPTY_BOOTS_SLOT_TEXTURE = Identifier.ofVanilla( "item/empty_armor_slot_boots");
 
-//    // This constructor gets called on the client when the server wants it to open the screenHandler,
-//    // The client will call the other constructor with an empty Inventory and the screenHandler will automatically
-//    // sync this empty inventory with the inventory on the server.
-//    public static LucyScreenHandler create(int syncId, PlayerInventory playerInventory, net.minecraft.network.PacketByteBuf buf) {
-//        int entityId = buf.readVarInt();
-//        LucyEntity lucy = (LucyEntity) playerInventory.player.getWorld().getEntityById(entityId);
-//        return new LucyScreenHandler(syncId, playerInventory, new SimpleInventory(GirlInventory.TOTAL_SLOTS), lucy);
-//    }
-
-
-
-    /*
-        public LucyScreenHandler(int syncId, PlayerInventory playerInventory, Inventory inventory, @Nullable LucyEntity lucy) {
-        super(BlockHard.LUCY_SCREEN_HANDLER, syncId);
-        this.lucy = lucy;
-        checkSize(inventory, GirlInventory.TOTAL_SLOTS);
-        this.inventory = inventory;
-    */
 
     // The codec-compatible constructor
-    public LucyScreenHandler(int syncId, PlayerInventory playerInventory, LucyInit.LucyScreenData data) {
+    public GirlScreenHandler(int syncId, PlayerInventory playerInventory, BlockHard.GirlScreenData data) {
         this(syncId, playerInventory, data.entityId());
     }
 
     // This constructor gets called from the BlockEntity on the server without calling the other constructor first, the server knows the inventory of the container
     // and can therefore directly provide it as an argument. This inventory will then be synced to the client.
-    public LucyScreenHandler(int syncId, PlayerInventory playerInventory, int lucyId) {
-        super(LucyInit.LUCY_SCREEN_HANDLER, syncId);
+    public GirlScreenHandler(int syncId, PlayerInventory playerInventory, int girlId) {
+        super(BlockHard.GIRL_SCREEN_HANDLER, syncId);
         PlayerEntity player = playerInventory.player;
         World world = player.getWorld();
 
-        Entity entity = world.getEntityById(lucyId);
-        if (!(entity instanceof LucyEntity lucyEntity)) {
+        Entity entity = world.getEntityById(girlId);
+        if (!(entity instanceof AbstractGirlEntity girlEntity)) {
             throw new IllegalStateException("LucyEntity not found or mismatched entity ID");
         }
-        this.lucy = lucyEntity;
+        this.girl = girlEntity;
 
         Inventory inventory;
-        if (lucy != null) {
-            inventory = lucy.getInventory(); // ← Use your custom implementation, not a copy
+        if (girl != null) {
+            inventory = girl.getInventory(); // ← Use your custom implementation, not a copy
         } else {
             inventory = new SimpleInventory(GirlInventory.TOTAL_SLOTS);
         }
@@ -92,11 +73,11 @@ public class LucyScreenHandler extends ScreenHandler {
             }
         });
 
-        if (lucy != null) {
-            this.addSlot(new PublicArmorSlot(inventory, lucy, EquipmentSlot.HEAD, GirlInventory.ARMOR_HEAD_SLOT, 8, 6, EMPTY_HELMET_SLOT_TEXTURE));
-            this.addSlot(new PublicArmorSlot(inventory, lucy, EquipmentSlot.CHEST, GirlInventory.ARMOR_CHEST_SLOT, 8, 24, EMPTY_CHESTPLATE_SLOT_TEXTURE));
-            this.addSlot(new PublicArmorSlot(inventory, lucy, EquipmentSlot.LEGS, GirlInventory.ARMOR_LEGS_SLOT, 8, 42, EMPTY_LEGGINGS_SLOT_TEXTURE));
-            this.addSlot(new PublicArmorSlot(inventory, lucy, EquipmentSlot.FEET, GirlInventory.ARMOR_FEET_SLOT, 8, 60, EMPTY_BOOTS_SLOT_TEXTURE));
+        if (girl != null) {
+            this.addSlot(new PublicArmorSlot(inventory, girl, EquipmentSlot.HEAD, GirlInventory.ARMOR_HEAD_SLOT, 8, 6, EMPTY_HELMET_SLOT_TEXTURE));
+            this.addSlot(new PublicArmorSlot(inventory, girl, EquipmentSlot.CHEST, GirlInventory.ARMOR_CHEST_SLOT, 8, 24, EMPTY_CHESTPLATE_SLOT_TEXTURE));
+            this.addSlot(new PublicArmorSlot(inventory, girl, EquipmentSlot.LEGS, GirlInventory.ARMOR_LEGS_SLOT, 8, 42, EMPTY_LEGGINGS_SLOT_TEXTURE));
+            this.addSlot(new PublicArmorSlot(inventory, girl, EquipmentSlot.FEET, GirlInventory.ARMOR_FEET_SLOT, 8, 60, EMPTY_BOOTS_SLOT_TEXTURE));
         } else {
             this.addSlot(new Slot(inventory, GirlInventory.ARMOR_HEAD_SLOT, 8, 6));
             this.addSlot(new Slot(inventory, GirlInventory.ARMOR_CHEST_SLOT, 8, 24));
@@ -206,8 +187,8 @@ public class LucyScreenHandler extends ScreenHandler {
 
 
 
-    public LucyEntity getLucy(){
-        return this.lucy;
+    public AbstractGirlEntity getGirl(){
+        return this.girl;
     }
 
 

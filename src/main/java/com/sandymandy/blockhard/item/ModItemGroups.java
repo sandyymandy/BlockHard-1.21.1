@@ -16,6 +16,7 @@ public class ModItemGroups {
                     .displayName(Text.translatable("itemgroup.blockhard.block_hard_items"))
                     .entries((displayContext, entries) -> {
                       entries.add(ModItems.LUCY_SPAWN_EGG);
+                      entries.add(ModItems.BIA_SPAWN_EGG);
 
 
 

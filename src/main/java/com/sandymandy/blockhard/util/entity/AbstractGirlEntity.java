@@ -1,7 +1,8 @@
-package com.sandymandy.blockhard.entity;
+package com.sandymandy.blockhard.util.entity;
 
-import com.sandymandy.blockhard.entity.lucy.screen.LucyScreenHandlerFactory;
+//import com.sandymandy.blockhard.entity.cat.screen.CatScreenHandlerFactory;
 import com.sandymandy.blockhard.scene.SceneEntity;
+import com.sandymandy.blockhard.screen.GirlScreenHandlerFactory;
 import com.sandymandy.blockhard.util.GlobleMessages;
 import com.sandymandy.blockhard.util.inventory.GirlInventory;
 import net.minecraft.entity.Entity;
@@ -38,19 +39,18 @@ import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animatable.instance.SingletonAnimatableInstanceCache;
 import software.bernie.geckolib.animation.*;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public abstract class AbstractGirlEntity extends TameableEntity implements GeoEntity, SceneEntity {
     private final AnimatableInstanceCache cache = new SingletonAnimatableInstanceCache(this);
-    public Set<String> hiddenBones;
-    public Set<String> shownBones;
+    public Map<String, Boolean> boneVisibility = new HashMap<>();
     public boolean showHiddenBones = false;
     public final int maxRelationshipLevel = 3;
     public int currentRelationshipLevel;
     private static final TrackedData<Boolean> SITTING = DataTracker.registerData(AbstractGirlEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+    private static final TrackedData<Boolean> STRIPPED = DataTracker.registerData(AbstractGirlEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private final GirlInventory inventory = GirlInventory.ofSize();
     private BlockPos basePos;
     private LivingEntity attackTarget;
@@ -62,22 +62,32 @@ public abstract class AbstractGirlEntity extends TameableEntity implements GeoEn
         return Items.DANDELION;
     }
 
-    protected String getGirlName() {
+    protected String getGirlDisplayName() {
         return "Null";
     }
 
-    protected AbstractGirlEntity(EntityType<? extends TameableEntity> entityType, World world) {
-        super(entityType, world);
+    protected String getGirlID() {
+        return "null";
     }
 
-    protected void openThisHandledScreen(PlayerEntity player){
+    protected String getClothingBones() {
+        return "bra";
+    }
+
+    protected String getArmorBones() {
+        return "armorBoobs, armorBootyL, armorBootyR, armorChest, armorHip, armorPantsLowL, armorShoesL, armorPantsUpL, armorPantsLowR, armorShoesR, armorPantsUpR, armorShoulderL, armorShoulderR, armorHelmet";
+    }
+
+
+    protected AbstractGirlEntity(EntityType<? extends TameableEntity> entityType, World world) {
+        super(entityType, world);
     }
 
     @Override
     protected void initDataTracker(DataTracker.Builder builder) {
         super.initDataTracker(builder);
         builder.add(SITTING, false);
-
+        builder.add(STRIPPED, false);
     }
 
 
@@ -123,9 +133,9 @@ public abstract class AbstractGirlEntity extends TameableEntity implements GeoEn
             return ActionResult.FAIL;
         }
 
-        if (!this.getWorld().isClient && isOwner(player) && this.isTamed() && hand.equals(Hand.MAIN_HAND)) {
-            if (!player.isSneaking()) {
-                openThisHandledScreen(player);
+        if (!this.getWorld().isClient && isOwner(player) && this.isTamed() && hand.equals(Hand.MAIN_HAND) && itemStack.equals(ItemStack.EMPTY)){
+            if (player.isSneaking()) {
+                player.openHandledScreen(new GirlScreenHandlerFactory(this));
                 this.getNavigation().stop();
                 this.setVelocity(0, 0, 0);
                 this.setTarget(null);
@@ -137,7 +147,7 @@ public abstract class AbstractGirlEntity extends TameableEntity implements GeoEn
         }
 
         if (!this.getWorld().isClient && isOwner(player) && this.isTamed() && itemInHand.equals(Items.COAL)) {
-            this.disown(player);
+            this.breakUp(player);
             return ActionResult.SUCCESS;
         }
 
@@ -155,11 +165,11 @@ public abstract class AbstractGirlEntity extends TameableEntity implements GeoEn
             setTarget(null);
             setSit(true);
             this.getWorld().sendEntityStatus(this, EntityStatuses.ADD_POSITIVE_PLAYER_REACTION_PARTICLES);
-            player.sendMessage(Text.literal("You Asked " + getGirlName() + " Out And She Said §aYes" ), true);
+            player.sendMessage(Text.literal("You Asked " + getGirlDisplayName() + " Out And She Said §aYes" ), true);
             this.setBasePosHere();
         } else {
             this.getWorld().sendEntityStatus(this, EntityStatuses.ADD_NEGATIVE_PLAYER_REACTION_PARTICLES);
-            player.sendMessage(Text.literal("You Asked " + getGirlName() + " Out And She Said §cNo"), true);
+            player.sendMessage(Text.literal("You Asked " + getGirlDisplayName() + " Out And She Said §cNo"), true);
         }
     }
 
@@ -187,7 +197,7 @@ public abstract class AbstractGirlEntity extends TameableEntity implements GeoEn
 
     @Override
     public boolean shouldRenderName() {
-        this.setCustomName(Text.of(getGirlName()));
+        this.setCustomName(Text.of(getGirlDisplayName()));
         this.setCustomNameVisible(true);
         return true;
     }
@@ -223,7 +233,7 @@ public abstract class AbstractGirlEntity extends TameableEntity implements GeoEn
             // Send a message referencing whichever Pos we have
             new GlobleMessages().GlobleMessage(
                     this.getWorld(),
-                    getGirlName() + " died and respawned at base: " +
+                    getGirlDisplayName() + " died and respawned at base: " +
                             respawnPos.getX() + ", " +
                             respawnPos.getY() + ", " +
                             respawnPos.getZ()
@@ -241,13 +251,14 @@ public abstract class AbstractGirlEntity extends TameableEntity implements GeoEn
         }
     }
 
-    public void disown(PlayerEntity player) {
+    public void breakUp(PlayerEntity player) {
         if(!player.getWorld().isClient){
             this.setTamed(false,true); // Mark the entity as untamed
             this.setOwnerUuid(null); // Remove the owner UUID
             this.setSit(false); // Ensure the entity is not sitting
+            this.setStripped(false);
             if(!isTamed() && !isOwner(player)){
-                player.sendMessage(Text.literal("§cYou Broke Up With " + getGirlName()), true);
+                player.sendMessage(Text.literal("§cYou Broke Up With " + getGirlDisplayName()), true);
             }
         }
     }
@@ -292,6 +303,13 @@ public abstract class AbstractGirlEntity extends TameableEntity implements GeoEn
         super.tick();
         previousYaw = getYaw();
         previousVelocity = getVelocity();
+        clothingLogic();
+    }
+
+    private void clothingLogic(){
+        toggleModelBones(getClothingBones(), !isStripped() && isBoneVisible(getClothingBones()));
+        toggleModelBones(getArmorBones(), !isStripped());
+        toggleModelBones("vagina", isStripped());
     }
 
     @Override
@@ -321,54 +339,19 @@ public abstract class AbstractGirlEntity extends TameableEntity implements GeoEn
     public void toggleModelBones(String bones, boolean visible) {
         String[] boneArray = bones.replaceAll("\\s+", "").split(",");
 
-        if (this.hiddenBones == null) {
-            this.hiddenBones = new HashSet<>();
-        }
-        if (this.shownBones == null) {
-            this.shownBones = new HashSet<>();
+        if (this.boneVisibility == null) {
+            this.boneVisibility = new HashMap<>();
         }
 
-        List<String> boneList = Arrays.asList(boneArray);
-
-        if (visible) {
-            boneList.forEach(this.hiddenBones::remove);
-            this.shownBones.addAll(boneList);
-            this.showHiddenBones = true;
-        } else {
-            boneList.forEach(this.shownBones::remove);
-            this.hiddenBones.addAll(boneList);
-            this.showHiddenBones = false;
+        for (String boneName : boneArray) {
+            this.boneVisibility.put(boneName, visible);
         }
-
     }
 
-    @Override
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
-
-        RegistryWrapper.WrapperLookup registryLookup = this.getWorld().getRegistryManager();
-        Inventories.writeNbt(nbt, this.inventory.getItems(), registryLookup);
-        nbt.putBoolean("Sitting", this.isSittingdown());
-        if (this.basePos != null) {
-            nbt.putInt("BaseX", this.basePos.getX());
-            nbt.putInt("BaseY", this.basePos.getY());
-            nbt.putInt("BaseZ", this.basePos.getZ());}
+    public boolean isBoneVisible(String boneName) {
+        return boneVisibility.getOrDefault(boneName, true); // default to visible
     }
 
-    @Override
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-
-        RegistryWrapper.WrapperLookup registryLookup = this.getWorld().getRegistryManager();
-        Inventories.readNbt(nbt, this.inventory.getItems(), registryLookup);
-        this.setSit(nbt.getBoolean("Sitting"));
-        if (nbt.contains("BaseX") && nbt.contains("BaseY") && nbt.contains("BaseZ")) {
-            int x = nbt.getInt("BaseX");
-            int y = nbt.getInt("BaseY");
-            int z = nbt.getInt("BaseZ");
-            this.basePos = new BlockPos(x, y, z);}
-
-    }
 
     @Override
     public void startScene(PlayerEntity player) {
@@ -393,33 +376,104 @@ public abstract class AbstractGirlEntity extends TameableEntity implements GeoEn
     }
 
     private <girlEntity extends GeoAnimatable> PlayState predicate(AnimationState<girlEntity> girlEntityAnimationState) {
+
+        AnimationController<?> controller = girlEntityAnimationState.getController();
+
+
+        // Handle override animation
+        if (overrideAnimation != null) {
+            controller.setAnimation(RawAnimation.begin().then(overrideAnimation, overrideLoop ? Animation.LoopType.LOOP : Animation.LoopType.PLAY_ONCE));
+
+            // If it's not looping, clear it after one play
+            if (!overrideLoop && controller.getAnimationState() == AnimationController.State.STOPPED) {
+                overrideAnimation = null;
+            }
+
+            return PlayState.CONTINUE;
+        }
+
+
+
         if (!this.isOnGround() &! isSittingdown()) {
-            girlEntityAnimationState.getController().setAnimation(RawAnimation.begin().then("animation."+ getGirlName().toLowerCase() +".fly", Animation.LoopType.LOOP));
+            girlEntityAnimationState.getController().setAnimation(RawAnimation.begin().then("animation."+ getGirlID() +".fly", Animation.LoopType.LOOP));
             toggleModelBones("steve", false);
             return PlayState.CONTINUE;
         }
 
         if (girlEntityAnimationState.isMoving() &! isSittingdown()) {
-            girlEntityAnimationState.getController().setAnimation(RawAnimation.begin().then("animation."+ getGirlName().toLowerCase() +".walk", Animation.LoopType.LOOP));
+            girlEntityAnimationState.getController().setAnimation(RawAnimation.begin().then("animation."+ getGirlID() +".walk", Animation.LoopType.LOOP));
             toggleModelBones("steve", false);
             return PlayState.CONTINUE;
         }
 
         if (isSittingdown()) {
-            girlEntityAnimationState.getController().setAnimation(RawAnimation.begin().then("animation."+ getGirlName().toLowerCase() +".sit", Animation.LoopType.LOOP));
+            girlEntityAnimationState.getController().setAnimation(RawAnimation.begin().then("animation."+ getGirlID() +".sit", Animation.LoopType.LOOP));
             toggleModelBones("steve", false);
             return PlayState.CONTINUE;
         }
 
 
-        girlEntityAnimationState.getController().setAnimation(RawAnimation.begin().then("animation."+ getGirlName().toLowerCase() +".idle", Animation.LoopType.LOOP));
+        girlEntityAnimationState.getController().setAnimation(RawAnimation.begin().then("animation."+ getGirlID() +".idle", Animation.LoopType.LOOP));
         toggleModelBones("steve", false);
         return PlayState.CONTINUE;
     }
 
+    public String overrideAnimation = null;
+    public boolean overrideLoop = false; // Used for forced one-shot animations (e.g., strip)
+
+
+    public void playAnimation(String animationName, boolean loop) {
+        this.overrideAnimation = animationName;
+        this.overrideLoop = loop;
+
+/*        if (!this.getWorld().isClient) {
+            GirlAnimationSyncS2CPacket.send(this, animationName, loop);
+      }*/
+    }
+
+
+
+    public boolean isStripped() {
+        return dataTracker.get(STRIPPED);
+
+    }
+
+    public void setStripped(boolean stripped) {
+        dataTracker.set(STRIPPED, stripped);
+    }
 
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
         return cache;
+    }
+
+    @Override
+    public void writeCustomDataToNbt(NbtCompound nbt) {
+        super.writeCustomDataToNbt(nbt);
+
+        RegistryWrapper.WrapperLookup registryLookup = this.getWorld().getRegistryManager();
+        Inventories.writeNbt(nbt, this.inventory.getItems(), registryLookup);
+        nbt.putBoolean("Sitting", this.isSittingdown());
+        nbt.putBoolean("Stripped", this.isStripped());
+        if (this.basePos != null) {
+            nbt.putInt("BaseX", this.basePos.getX());
+            nbt.putInt("BaseY", this.basePos.getY());
+            nbt.putInt("BaseZ", this.basePos.getZ());}
+    }
+
+    @Override
+    public void readCustomDataFromNbt(NbtCompound nbt) {
+        super.readCustomDataFromNbt(nbt);
+
+        RegistryWrapper.WrapperLookup registryLookup = this.getWorld().getRegistryManager();
+        Inventories.readNbt(nbt, this.inventory.getItems(), registryLookup);
+        this.setSit(nbt.getBoolean("Sitting"));
+        this.setStripped(nbt.getBoolean("Stripped"));
+        if (nbt.contains("BaseX") && nbt.contains("BaseY") && nbt.contains("BaseZ")) {
+            int x = nbt.getInt("BaseX");
+            int y = nbt.getInt("BaseY");
+            int z = nbt.getInt("BaseZ");
+            this.basePos = new BlockPos(x, y, z);}
+
     }
 }

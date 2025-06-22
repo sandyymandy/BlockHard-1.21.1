@@ -1,9 +1,9 @@
 {
   "item.blockhard.lucy_spawn_egg": "Lucy Spawn Egg",
 
-  "entity.blockhard.lucy": "Lucy",
+  "item.blockhard.bia_spawn_egg": "Bia Spawn Egg",
 
   "itemgroup.blockhard.block_hard_items": "Block Hard Items",
 
-  "screen.blockhard.lucy_inventory": "Lucy's Inventory"
+  "screen.blockhard.girl_inventory": "Inventory"
 }
